@@ -12,3 +12,6 @@ supabase/.branches
 .vercel
 .DS_Store
 *.log
+
+# Referência visual local (pode conter fotos/nomes reais; repositório é público)
+template_dois_amores/
