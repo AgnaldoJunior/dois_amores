@@ -1,0 +1,49 @@
+import { Link } from 'react-router'
+import { Card } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Label, ScriptTitle, SectionTitle } from '@/components/ui/Typography'
+
+type Stat = { value: string; label: string }
+
+function StatCard({ value, label }: Stat) {
+  return (
+    <Card className="flex-1 p-3 text-center flex flex-col gap-1">
+      <span className="font-display text-5xl leading-none text-primary">{value}</span>
+      <Label className="text-2xs tracking-normal">{label}</Label>
+    </Card>
+  )
+}
+
+export function HomePage() {
+  // Dados reais chegam na Fase 4 (estatísticas calculadas a partir de user_books).
+  const stats: Stat[] = [
+    { value: '0', label: 'Livros lidos' },
+    { value: '0', label: 'Páginas lidas' },
+    { value: '0', label: 'Clubes' },
+  ]
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <div className="size-avatar-md rounded-full bg-accent shrink-0" aria-hidden="true" />
+        <ScriptTitle>Olá!</ScriptTitle>
+      </div>
+
+      <section aria-label="Suas estatísticas" className="flex gap-2">
+        {stats.map((s) => (
+          <StatCard key={s.label} {...s} />
+        ))}
+      </section>
+
+      <Link
+        to="/publicar"
+        className="flex min-h-control-h items-center justify-center rounded-card bg-primary px-4 font-sans text-base text-inverse"
+      >
+        PUBLICAR NOVA LEITURA
+      </Link>
+
+      <SectionTitle>Leituras recentes</SectionTitle>
+      <EmptyState>Suas leituras vão aparecer aqui.</EmptyState>
+    </div>
+  )
+}

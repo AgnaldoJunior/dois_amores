@@ -1,0 +1,14 @@
+/node_modules
+dist
+dev-dist
+coverage
+*.local
+.env
+.env.*
+!.env.example
+supabase/.env
+supabase/.temp
+supabase/.branches
+.vercel
+.DS_Store
+*.log
