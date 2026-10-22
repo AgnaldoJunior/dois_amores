@@ -83,7 +83,9 @@ export const tokens = {
     md: 16,
     lg: 18,
     xl: 20,
+    'title-sm': 22,
     '2xl': 24,
+    'title-md': 28,
     '3xl': 30,
     '4xl': 36,
     '5xl': 40,
@@ -126,6 +128,7 @@ export const tokens = {
   size: {
     'star-sm': 12,
     'star-md': 16,
+    'star-post': 18,
     'star-lg': 20,
     'avatar-sm': 44,
     'avatar-md': 56,

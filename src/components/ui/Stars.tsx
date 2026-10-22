@@ -11,6 +11,7 @@ export type StarFill = 'full' | 'half' | 'empty'
 const sizeClass = {
   sm: 'size-star-sm',
   md: 'size-star-md',
+  post: 'size-star-post',
   lg: 'size-star-lg',
 } as const
 
@@ -28,7 +29,7 @@ export function formatRating(value: number) {
   return value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
 }
 
-function Star({ fill, className }: { fill: StarFill; className: string }) {
+export function StarIcon({ fill, className }: { fill: StarFill; className: string }) {
   const id = useId()
   const maskId = `${id}-inner-stroke`
   const clipId = `${id}-half`
@@ -90,7 +91,7 @@ export function Stars({ value, size = 'md', max = 5, label, className = '' }: St
       className={`inline-flex items-center gap-1.5 ${className}`}
     >
       {fills.map((fill, i) => (
-        <Star key={i} fill={fill} className={sizeClass[size]} />
+        <StarIcon key={i} fill={fill} className={sizeClass[size]} />
       ))}
     </span>
   )

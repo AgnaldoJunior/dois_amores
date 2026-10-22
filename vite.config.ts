@@ -39,6 +39,28 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,webmanifest}'],
         navigateFallback: '/index.html',
+        runtimeCaching: [
+          {
+            // Capas da Open Library (covers.openlibrary.org redireciona para archive.org)
+            urlPattern: ({ url }) =>
+              url.hostname === 'covers.openlibrary.org' || url.hostname.endsWith('.archive.org'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'book-covers',
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: ({ url }) => url.hostname.endsWith('.supabase.co') && url.pathname.includes('/storage/v1/object/public/'),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'supabase-images',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ],

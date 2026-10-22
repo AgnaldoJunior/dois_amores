@@ -8,6 +8,28 @@ vi.mock('@/features/profile/api', () => ({
   }),
 }))
 
+vi.mock('@/features/readings/api', () => ({
+  useMyStats: () => ({ data: { booksRead: 12, pagesRead: 3480, clubs: 2 } }),
+  useRecentReadings: () => ({
+    data: [
+      {
+        id: 'r1',
+        started_on: '2026-09-01',
+        finished_on: '2026-09-27',
+        rank_characters: 5,
+        rank_plot: 4,
+        rank_writing: 5,
+        rank_ending: 4,
+        favorite_character: null,
+        favorite_quote: null,
+        comment: 'Me acompanhou por dias.',
+        book: { id: 'b1', title: 'Três', author: 'Valérie Perrin', pages: 672, cover_url: null, summary: null },
+      },
+    ],
+    isLoading: false,
+  }),
+}))
+
 describe('navegação principal', () => {
   it('mostra as quatro abas', () => {
     renderApp('/')
@@ -27,7 +49,16 @@ describe('navegação principal', () => {
     expect(screen.getByText('Olá, Leyna')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Abrir meu perfil' })).toHaveAttribute('href', '/perfil')
     expect(screen.getByText('Livros lidos')).toBeInTheDocument()
+    expect(screen.getByText('12')).toBeInTheDocument()
+    expect(screen.getByText('3.480')).toBeInTheDocument()
     expect(screen.getByText('Páginas lidas')).toBeInTheDocument()
+  })
+
+  it('a tela inicial lista as leituras recentes com link para editar', () => {
+    renderApp('/')
+    const link = screen.getByRole('link', { name: /Três · Valérie Perrin/ })
+    expect(link).toHaveAttribute('href', '/leituras/r1/editar')
+    expect(screen.getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
   })
 
   it('rota desconhecida mostra página não encontrada', () => {
