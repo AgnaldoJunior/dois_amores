@@ -448,7 +448,9 @@ project_id = "zrnbljgvspvwjdsjnvxu"
 site_url = "https://dois-amores.vercel.app"
 additional_redirect_urls = [
   "https://dois-amores.vercel.app/**",
-  "https://*-agnaldojunior-1110s-projects.vercel.app/**",
+  "https://dois-amores-agnaldo-s-team.vercel.app/**",
+  # Previews da Vercel: dois-amores-<hash ou branch>-agnaldo-s-team.vercel.app
+  "https://dois-amores-*-agnaldo-s-team.vercel.app/**",
   "http://localhost:5173/**",
 ]
 
