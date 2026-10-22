@@ -1,7 +1,10 @@
 import { Link } from 'react-router'
+import { Avatar } from '@/components/ui/Avatar'
+import { ButtonLink } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Label, ScriptTitle, SectionTitle } from '@/components/ui/Typography'
+import { useProfile } from '@/features/profile/api'
 
 type Stat = { value: string; label: string }
 
@@ -15,6 +18,9 @@ function StatCard({ value, label }: Stat) {
 }
 
 export function HomePage() {
+  const { data: profile } = useProfile()
+  const firstName = profile?.name.split(/\s+/)[0] ?? ''
+
   // Dados reais chegam na Fase 4 (estatísticas calculadas a partir de user_books).
   const stats: Stat[] = [
     { value: '0', label: 'Livros lidos' },
@@ -24,10 +30,10 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <div className="size-avatar-md rounded-full bg-accent shrink-0" aria-hidden="true" />
-        <ScriptTitle>Olá!</ScriptTitle>
-      </div>
+      <Link to="/perfil" className="flex items-center gap-3 self-start" aria-label="Abrir meu perfil">
+        <Avatar name={profile?.name ?? ''} url={profile?.avatar_url} size="md" />
+        <ScriptTitle>{firstName ? `Olá, ${firstName}` : 'Olá!'}</ScriptTitle>
+      </Link>
 
       <section aria-label="Suas estatísticas" className="flex gap-2">
         {stats.map((s) => (
@@ -35,12 +41,9 @@ export function HomePage() {
         ))}
       </section>
 
-      <Link
-        to="/publicar"
-        className="flex min-h-control-h items-center justify-center rounded-card bg-primary px-4 font-sans text-base text-inverse"
-      >
+      <ButtonLink to="/publicar" className="text-base">
         PUBLICAR NOVA LEITURA
-      </Link>
+      </ButtonLink>
 
       <SectionTitle>Leituras recentes</SectionTitle>
       <EmptyState>Suas leituras vão aparecer aqui.</EmptyState>

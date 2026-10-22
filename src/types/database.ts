@@ -257,6 +257,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"delete_my_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "evaluate_club_book":
 { Args: { "p_club_book_id": string }; Returns: undefined
                            },
