@@ -17,6 +17,15 @@ export const AuthContext = createContext<AuthState>({
   recovering: false,
 })
 
+/** Erros do servidor que significam "este login não vale mais" (sem rede não conta: o PWA funciona offline). */
+const STALE_SESSION_CODES = new Set(['user_not_found', 'session_not_found', 'bad_jwt'])
+
+export async function isStaleSession(): Promise<boolean> {
+  const { error } = await supabase.auth.getUser()
+  if (!error) return false
+  return (error.code != null && STALE_SESSION_CODES.has(error.code)) || error.status === 403
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     session: null,
@@ -28,7 +37,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      // A sessão salva no aparelho pode ser de uma conta que não existe mais
+      // (excluída em outro aparelho, ou banco local recriado). Confirma no servidor.
+      if (data.session && (await isStaleSession())) {
+        await supabase.auth.signOut({ scope: 'local' })
+        if (active) setState((s) => ({ ...s, session: null, user: null, loading: false }))
+        return
+      }
       if (!active) return
       setState((s) => ({ ...s, session: data.session, user: data.session?.user ?? null, loading: false }))
     })
