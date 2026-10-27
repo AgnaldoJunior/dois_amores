@@ -38,8 +38,16 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,webmanifest}'],
+        // O gerador de PDF (~1,2 MB) não é pré-baixado: só quem exporta a revista precisa dele.
+        globIgnores: ['**/react-pdf*.js', '**/template-*.js'],
         navigateFallback: '/index.html',
         runtimeCaching: [
+          {
+            // Depois da primeira exportação, o gerador de PDF fica guardado (funciona offline).
+            urlPattern: ({ url }) => /\/assets\/(react-pdf|template-)[^/]*\.js$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: { cacheName: 'pdf-generator', expiration: { maxEntries: 10 } },
+          },
           {
             // Capas da Open Library (covers.openlibrary.org redireciona para archive.org)
             urlPattern: ({ url }) =>
@@ -64,6 +72,22 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    // O único pedaço acima de 500 kB é o @react-pdf (~1,2 MB), baixado só ao exportar a revista.
+    chunkSizeWarningLimit: 1300,
+    rolldownOptions: {
+      output: {
+        // Bibliotecas em pedaços próprios: o código do app muda a cada versão, elas quase nunca.
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler|react-router)[\\/]/ },
+            { name: 'supabase', test: /node_modules[\\/]@supabase[\\/]/ },
+            { name: 'query', test: /node_modules[\\/]@tanstack[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
