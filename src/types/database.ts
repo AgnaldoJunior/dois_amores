@@ -23,16 +23,36 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "books": {
+            "ai_usage": {
                   Row: {
-                    "author": string | null,"cover_url": string | null,"created_at": string,"id": string,"openlibrary_work_key": string,"pages": number | null,"summary": string | null,"title": string,"updated_at": string
+                    "calls": number,"day": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "author"?: string | null,"cover_url"?: string | null,"created_at"?: string,"id"?: string,"openlibrary_work_key": string,"pages"?: number | null,"summary"?: string | null,"title": string,"updated_at"?: string
+                    "calls"?: number,"day"?: string,"user_id": string
                   }
                   Update: {
-                    "author"?: string | null,"cover_url"?: string | null,"created_at"?: string,"id"?: string,"openlibrary_work_key"?: string,"pages"?: number | null,"summary"?: string | null,"title"?: string,"updated_at"?: string
+                    "calls"?: number,"day"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ai_usage_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"books": {
+                  Row: {
+                    "author": string | null,"cover_url": string | null,"created_at": string,"id": string,"openlibrary_work_key": string,"pages": number | null,"summary": string | null,"summary_lang": string | null,"summary_original": string | null,"summary_source": string,"title": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author"?: string | null,"cover_url"?: string | null,"created_at"?: string,"id"?: string,"openlibrary_work_key": string,"pages"?: number | null,"summary"?: string | null,"summary_lang"?: string | null,"summary_original"?: string | null,"summary_source"?: string,"title": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "author"?: string | null,"cover_url"?: string | null,"created_at"?: string,"id"?: string,"openlibrary_work_key"?: string,"pages"?: number | null,"summary"?: string | null,"summary_lang"?: string | null,"summary_original"?: string | null,"summary_source"?: string,"title"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -242,6 +262,9 @@ isOneToOne: false
             "can_vote_club_book":
 { Args: { "p_club_book_id": string }; Returns: boolean
                            },
+"consume_ai_quota":
+{ Args: { "p_limit": number,"p_user_id": string }; Returns: boolean
+                           },
 "create_club":
 { Args: { "p_cover_url"?: string,"p_name": string }; Returns: {
               "cover_url": string | null,
@@ -338,6 +361,9 @@ isOneToOne: false
 "openlibrary_work_key": string,
 "pages": number | null,
 "summary": string | null,
+"summary_lang": string | null,
+"summary_original": string | null,
+"summary_source": string,
 "title": string,
 "updated_at": string
             }

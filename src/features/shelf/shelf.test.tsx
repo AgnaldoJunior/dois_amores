@@ -2,13 +2,14 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Reading } from '@/features/readings/api'
 import { renderApp } from '@/test/renderApp'
-import { groupShelf, type Shelf } from './api'
+import { groupShelf, needsTranslation, type Shelf } from './api'
 
 const state = vi.hoisted(() => ({
   shelf: undefined as Shelf | undefined,
   book: undefined as Record<string, unknown> | undefined,
   myReading: null as Reading | null,
   inWishlist: false,
+  translating: false,
   toggle: vi.fn(),
 }))
 
@@ -19,6 +20,7 @@ vi.mock('@/features/shelf/api', async (importOriginal) => ({
   useMyReadingOf: () => ({ data: state.myReading, isLoading: false }),
   useIsInWishlist: () => ({ data: state.inWishlist }),
   useWishlistToggle: () => ({ mutate: state.toggle, isPending: false }),
+  useSummaryTranslation: () => ({ isFetching: state.translating }),
 }))
 
 const reading = (id: string, title: string, over: Partial<Reading> = {}): Reading => ({
@@ -46,6 +48,15 @@ describe('groupShelf', () => {
     ])
     expect(shelf.read.map((r) => r.book.title)).toEqual(['Novo', 'Antigo'])
     expect(shelf.reading.map((r) => r.book.title)).toEqual(['Lendo agora', 'Lendo há tempo'])
+  })
+})
+
+describe('needsTranslation', () => {
+  it('só traduz resumos com idioma ainda não verificado', () => {
+    expect(needsTranslation({ summary: 'Three friends.', summary_lang: null })).toBe(true)
+    expect(needsTranslation({ summary: 'Três amigos.', summary_lang: 'pt' })).toBe(false)
+    expect(needsTranslation({ summary: null, summary_lang: null })).toBe(false)
+    expect(needsTranslation(undefined)).toBe(false)
   })
 })
 
@@ -94,6 +105,7 @@ describe('Página do livro', () => {
     state.book = { id: 'book-1', title: 'Três', author: 'Valérie Perrin', pages: 672, cover_url: null, summary: null, openlibrary_work_key: '/works/OL1W' }
     state.myReading = null
     state.inWishlist = false
+    state.translating = false
     state.toggle.mockClear()
   })
 
@@ -109,6 +121,21 @@ describe('Página do livro', () => {
     state.book = { ...state.book, summary: 'Três amigos de infância.' }
     renderApp('/livros/book-1')
     expect(screen.getByText('Três amigos de infância.')).toBeInTheDocument()
+  })
+
+  it('avisa enquanto traduz e marca o resumo traduzido por IA', () => {
+    state.translating = true
+    state.book = { ...state.book, summary: 'Three friends.', summary_lang: null, summary_source: 'openlibrary' }
+    const { unmount } = renderApp('/livros/book-1')
+    expect(screen.getByRole('status')).toHaveTextContent('traduzindo para o português…')
+    expect(screen.queryByText('resumo traduzido por IA')).not.toBeInTheDocument()
+    unmount()
+
+    state.translating = false
+    state.book = { ...state.book, summary: 'Três amigos.', summary_lang: 'pt', summary_source: 'ai_translation' }
+    renderApp('/livros/book-1')
+    expect(screen.getByText('Três amigos.')).toBeInTheDocument()
+    expect(screen.getByText('resumo traduzido por IA')).toBeInTheDocument()
   })
 
   it('resumo longo começa recolhido', async () => {

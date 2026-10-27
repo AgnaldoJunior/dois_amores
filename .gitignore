@@ -15,3 +15,6 @@ supabase/.branches
 
 # Referência visual local (pode conter fotos/nomes reais; repositório é público)
 template_dois_amores/
+
+# Segredos das Edge Functions (gerado a partir de supabase/.env)
+supabase/functions/.env

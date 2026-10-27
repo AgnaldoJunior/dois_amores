@@ -15,6 +15,12 @@ export type BookSearchResult = {
   year: number | null
 }
 
+type EditionDoc = {
+  title?: string
+  cover_i?: number
+  language?: string[]
+}
+
 type SearchDoc = {
   key?: string
   title?: string
@@ -22,24 +28,55 @@ type SearchDoc = {
   cover_i?: number
   number_of_pages_median?: number
   first_publish_year?: number
+  editions?: { docs?: EditionDoc[] }
 }
 
-const SEARCH_FIELDS = 'key,title,author_name,cover_i,number_of_pages_median,first_publish_year'
+/**
+ * Idioma preferido das edições. Com `lang=pt` a Search API devolve, em `editions`,
+ * a edição em português quando ela existe (o código precisa ter 2 letras; "por" é ignorado).
+ */
+export const PREFERRED_LANG = 'pt'
+const PREFERRED_MARC = 'por'
 
+const SEARCH_FIELDS = [
+  'key',
+  'title',
+  'author_name',
+  'cover_i',
+  'number_of_pages_median',
+  'first_publish_year',
+  'editions',
+  'editions.title',
+  'editions.cover_i',
+  'editions.language',
+].join(',')
+
+/**
+ * Converte um resultado da busca. Se a edição destacada estiver em português,
+ * usa o título e a capa dela; a chave continua sendo a da obra, para todas as
+ * leituras do mesmo livro apontarem para o mesmo registro.
+ */
 export function normalizeSearchDoc(doc: SearchDoc): BookSearchResult | null {
   if (!doc.key || !/^\/works\/OL\d+W$/.test(doc.key) || !doc.title) return null
+  const edition = doc.editions?.docs?.[0]
+  const portuguese = edition?.language?.includes(PREFERRED_MARC) ? edition : undefined
   return {
     workKey: doc.key,
-    title: doc.title,
+    title: portuguese?.title?.trim() || doc.title,
     author: doc.author_name?.[0] ?? null,
-    coverId: doc.cover_i ?? null,
+    coverId: portuguese?.cover_i ?? doc.cover_i ?? null,
     pages: doc.number_of_pages_median && doc.number_of_pages_median > 0 ? doc.number_of_pages_median : null,
     year: doc.first_publish_year ?? null,
   }
 }
 
 export async function searchBooks(query: string, { limit = 5, signal }: { limit?: number; signal?: AbortSignal } = {}) {
-  const params = new URLSearchParams({ q: query.trim(), limit: String(limit), fields: SEARCH_FIELDS })
+  const params = new URLSearchParams({
+    q: query.trim(),
+    limit: String(limit),
+    lang: PREFERRED_LANG,
+    fields: SEARCH_FIELDS,
+  })
   const res = await fetch(`${BASE}/search.json?${params}`, { signal })
   if (!res.ok) throw new Error(`Open Library respondeu ${res.status}`)
   const json = (await res.json()) as { docs?: SearchDoc[] }

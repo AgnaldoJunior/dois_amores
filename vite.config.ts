@@ -74,7 +74,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}', 'templates/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'templates/**/*.test.{ts,tsx}', 'supabase/functions/**/*.test.ts'],
     css: false,
     env: {
       VITE_SUPABASE_URL: 'http://127.0.0.1:54321',

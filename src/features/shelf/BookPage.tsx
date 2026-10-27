@@ -11,7 +11,7 @@ import { RANK_FIELDS } from '@/features/readings/validation'
 import { formatDateShort } from '@/lib/dates'
 import { memberAverage } from '@/lib/domain/ratings'
 import { formatCount } from '@/lib/domain/stats'
-import { useBook, useIsInWishlist, useMyReadingOf, useWishlistToggle } from './api'
+import { useBook, useIsInWishlist, useMyReadingOf, useSummaryTranslation, useWishlistToggle, type BookDetail } from './api'
 
 /** /livros/:bookId — página do livro (Figma 06) com os dados de leitura do usuário. */
 export function BookPage() {
@@ -36,7 +36,7 @@ export function BookPage() {
       {book.pages && (
         <p className="text-center font-mono text-xs uppercase text-primary">{formatCount(book.pages)} páginas</p>
       )}
-      <Summary text={book.summary} />
+      <Summary book={book} />
 
       {readingLoading ? null : reading ? (
         <>
@@ -54,9 +54,14 @@ export function BookPage() {
 
 export const SUMMARY_PREVIEW_CHARS = 360
 
-/** Resumo da Open Library; textos longos começam recolhidos. */
-function Summary({ text }: { text: string | null }) {
+/**
+ * Resumo da Open Library, traduzido pela IA na primeira visita quando não está
+ * em português. Textos longos começam recolhidos.
+ */
+function Summary({ book }: { book: BookDetail }) {
   const [expanded, setExpanded] = useState(false)
+  const translation = useSummaryTranslation(book)
+  const text = book.summary
   if (!text) return <HandText className="text-center">sem resumo disponível</HandText>
   const long = text.length > SUMMARY_PREVIEW_CHARS
   const shown = long && !expanded ? `${text.slice(0, SUMMARY_PREVIEW_CHARS).trimEnd()}…` : text
@@ -72,6 +77,14 @@ function Summary({ text }: { text: string | null }) {
         >
           {expanded ? 'mostrar menos' : 'ler resumo completo'}
         </button>
+      )}
+      {translation.isFetching && (
+        <p role="status" className="font-mono text-2xs uppercase tracking-label text-primary">
+          traduzindo para o português…
+        </p>
+      )}
+      {book.summary_source === 'ai_translation' && (
+        <p className="font-hand text-lg text-accentStrong">resumo traduzido por IA</p>
       )}
     </div>
   )

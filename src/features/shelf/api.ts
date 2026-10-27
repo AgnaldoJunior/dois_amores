@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { readingKeys, type Reading } from '@/features/readings/api'
+import { translateSummary } from '@/lib/ai/client'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { getWorkSummary } from '@/lib/openlibrary/client'
 import { supabase, type Tables } from '@/lib/supabase'
@@ -7,7 +8,7 @@ import { supabase, type Tables } from '@/lib/supabase'
 export type ShelfBook = Pick<Tables<'books'>, 'id' | 'title' | 'author' | 'pages' | 'cover_url'>
 export type BookDetail = Pick<
   Tables<'books'>,
-  'id' | 'title' | 'author' | 'pages' | 'cover_url' | 'summary' | 'openlibrary_work_key'
+  'id' | 'title' | 'author' | 'pages' | 'cover_url' | 'summary' | 'openlibrary_work_key' | 'summary_lang' | 'summary_source'
 >
 export type WishlistItem = { book: ShelfBook; created_at: string }
 
@@ -67,7 +68,7 @@ export function useBook(bookId: string) {
     queryFn: async (): Promise<BookDetail> => {
       const { data, error } = await supabase
         .from('books')
-        .select(`${SHELF_BOOK}, summary, openlibrary_work_key`)
+        .select(`${SHELF_BOOK}, summary, openlibrary_work_key, summary_lang, summary_source`)
         .eq('id', bookId)
         .single()
       if (error) throw error
@@ -80,9 +81,32 @@ export function useBook(bookId: string) {
         p_title: data.title,
         p_summary: summary,
       })
-      return { ...data, summary }
+      return { ...data, summary, summary_lang: null }
     },
     staleTime: 10 * 60_000,
+  })
+}
+
+/** O resumo precisa passar pela IA (idioma ainda não verificado)? */
+export const needsTranslation = (book: Pick<BookDetail, 'summary' | 'summary_lang'> | undefined) =>
+  Boolean(book?.summary && !book.summary_lang)
+
+/**
+ * Traduz o resumo para o português na primeira visita (a Edge Function guarda
+ * o resultado no livro, então cada livro é traduzido uma vez só).
+ */
+export function useSummaryTranslation(book: BookDetail | undefined) {
+  const queryClient = useQueryClient()
+  return useQuery({
+    queryKey: ['books', book?.id, 'translation'],
+    enabled: needsTranslation(book),
+    retry: false,
+    staleTime: Infinity,
+    queryFn: async () => {
+      const result = await translateSummary(book!.id)
+      queryClient.setQueryData<BookDetail>(shelfKeys.book(book!.id), (old) => (old ? { ...old, ...result } : old))
+      return result
+    },
   })
 }
 

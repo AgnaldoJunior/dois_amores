@@ -22,6 +22,40 @@ describe('Open Library', () => {
     })
   })
 
+  it('prefere título e capa da edição em português, mantendo a chave da obra', () => {
+    expect(
+      normalizeSearchDoc({
+        key: '/works/OL20965973W',
+        title: 'The Midnight Library',
+        author_name: ['Matt Haig'],
+        cover_i: 10313767,
+        editions: { docs: [{ title: 'A Biblioteca Da Meia-Noite', cover_i: 15236164, language: ['por'] }] },
+      }),
+    ).toMatchObject({ workKey: '/works/OL20965973W', title: 'A Biblioteca Da Meia-Noite', coverId: 15236164 })
+  })
+
+  it('sem edição em português, mantém o título original', () => {
+    expect(
+      normalizeSearchDoc({
+        key: '/works/OL25377714W',
+        title: 'Trois',
+        cover_i: 12019565,
+        editions: { docs: [{ title: 'Trois', language: ['fre'] }] },
+      }),
+    ).toMatchObject({ title: 'Trois', coverId: 12019565 })
+  })
+
+  it('edição em português sem capa usa a capa da obra', () => {
+    expect(
+      normalizeSearchDoc({
+        key: '/works/OL1W',
+        title: 'Original',
+        cover_i: 99,
+        editions: { docs: [{ title: 'Traduzido', language: ['por'] }] },
+      }),
+    ).toMatchObject({ title: 'Traduzido', coverId: 99 })
+  })
+
   it('descarta resultados que não são obras', () => {
     expect(normalizeSearchDoc({ key: '/books/OL1M', title: 'Edição' })).toBeNull()
     expect(normalizeSearchDoc({ key: '/works/OL1W' })).toBeNull()
@@ -52,6 +86,8 @@ describe('Open Library', () => {
     const url = new URL(fetchMock.mock.calls[0]![0] as string)
     expect(url.searchParams.get('q')).toBe('torto arado')
     expect(url.searchParams.get('limit')).toBe('5')
+    expect(url.searchParams.get('lang')).toBe('pt')
+    expect(url.searchParams.get('fields')).toContain('editions.language')
     vi.unstubAllGlobals()
   })
 })

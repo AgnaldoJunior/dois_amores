@@ -72,6 +72,30 @@ npx supabase link --project-ref <project-ref>
 npx supabase db push
 ```
 
+## Inteligência artificial
+
+Toda chamada de IA passa pela Edge Function [supabase/functions/ai](supabase/functions/ai/index.ts);
+a chave nunca vai para o navegador. O provedor fica atrás da interface `AiProvider`
+([supabase/functions/_shared/ai](supabase/functions/_shared/ai)); para trocar, crie outro
+adaptador e registre em `createAiProvider`.
+
+- Modelo padrão: `gemini-3.5-flash-lite`, com `gemini-3.1-flash-lite` de reserva (troque com
+  `GEMINI_MODEL` / `GEMINI_FALLBACK_MODELS`). O `gemini-2.5-flash` da especificação não está mais
+  disponível para contas novas, e o `gemini-3.8-flash` levou 70–90 s por resposta nos testes.
+- Cada tentativa tem limite de 25 s; com erro 429/5xx ou demora, tenta de novo e passa para o reserva.
+- Limite de 20 chamadas por pessoa por dia (`AI_DAILY_LIMIT`); falhas do provedor devolvem a cota.
+
+Ações disponíveis: `translate-summary` (traduz o resumo da Open Library para o português uma vez
+por livro e guarda o original em `books.summary_original`).
+
+```bash
+# local
+npx supabase functions serve ai --env-file supabase/functions/.env
+# produção
+npx supabase secrets set --env-file supabase/functions/.env
+npx supabase functions deploy ai
+```
+
 ## Identidade visual
 
 Toda cor, fonte, tamanho, espaçamento, raio e sombra vem de [src/theme/tokens.ts](src/theme/tokens.ts).
