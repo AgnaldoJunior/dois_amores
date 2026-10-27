@@ -72,6 +72,21 @@ npx supabase link --project-ref <project-ref>
 npx supabase db push
 ```
 
+## Dados dos livros
+
+- **Open Library** é a identidade do livro: a busca e a chave `openlibrary_work_key` agrupam
+  todas as edições de uma obra, o que mantém as notas do clube juntas. A busca pede edições em
+  português (`lang=pt`) e usa o título e a capa delas quando existem.
+- **Google Books** completa o livro ao salvar (Edge Function [books](supabase/functions/books/index.ts),
+  chave `GOOGLE_BOOKS_API_KEY` só no servidor): procura a edição em português com o mesmo título e
+  autor, prefere ISBN brasileiro (978-65/978-85), ignora adaptações (quadrinhos, box) e usa a
+  **sinopse da editora**, a **capa** e o número de páginas. Se a Google só tiver a edição de Portugal,
+  a capa da Open Library tem preferência.
+- Toda capa é copiada para o bucket público `covers` (servido pelo Supabase, com CORS para o PDF).
+- Sem sinopse em português na Google, a IA traduz o resumo da Open Library (abaixo).
+- A Google Books costuma responder 503 de forma intermitente: a função tenta de novo e, se não
+  conseguir, salva o livro assim mesmo e completa na próxima visita.
+
 ## Inteligência artificial
 
 Toda chamada de IA passa pela Edge Function [supabase/functions/ai](supabase/functions/ai/index.ts);
@@ -89,11 +104,11 @@ Ações disponíveis: `translate-summary` (traduz o resumo da Open Library para 
 por livro e guarda o original em `books.summary_original`).
 
 ```bash
-# local
-npx supabase functions serve ai --env-file supabase/functions/.env
+# local (todas as funções)
+npx supabase functions serve --env-file supabase/functions/.env
 # produção
 npx supabase secrets set --env-file supabase/functions/.env
-npx supabase functions deploy ai
+npx supabase functions deploy ai books
 ```
 
 ## Identidade visual

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
+import { enrichBookWithin } from '@/lib/books/enrich'
 import { computeReadingStats } from '@/lib/domain/stats'
 import { coverUrl, getWorkSummary, type BookSearchResult } from '@/lib/openlibrary/client'
 import { supabase, type Tables } from '@/lib/supabase'
@@ -32,7 +33,13 @@ export const readingKeys = {
   stats: (userId: string) => ['readings', 'stats', userId] as const,
 }
 
-/** Salva o livro escolhido no catálogo (se ainda não existir), com resumo da Works API. */
+/** Tempo máximo esperando a Google Books ao escolher o livro (depois completa na página do livro). */
+export const ENRICH_WAIT_MS = 8000
+
+/**
+ * Salva o livro escolhido no catálogo (se ainda não existir), com resumo da Works API,
+ * e tenta completar com a edição em português da Google Books (capa e sinopse).
+ */
 export async function ensureBook(result: BookSearchResult): Promise<Book> {
   const summary = await getWorkSummary(result.workKey).catch(() => null)
   const { data, error } = await supabase
@@ -47,8 +54,19 @@ export async function ensureBook(result: BookSearchResult): Promise<Book> {
     .select(BOOK_FIELDS)
     .single()
   if (error) throw error
-  return data
+  const book = data as Book
+  const enriched = await enrichBookWithin(book.id, ENRICH_WAIT_MS)
+  return enriched ? { ...book, ...pickBook(enriched) } : book
 }
+
+const pickBook = ({ id, title, author, pages, cover_url, summary }: Book): Book => ({
+  id,
+  title,
+  author,
+  pages,
+  cover_url,
+  summary,
+})
 
 /** Leitura já registrada pelo usuário para este livro (uma por livro). */
 export async function findMyReadingId(userId: string, bookId: string): Promise<string | null> {

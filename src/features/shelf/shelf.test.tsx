@@ -10,6 +10,7 @@ const state = vi.hoisted(() => ({
   myReading: null as Reading | null,
   inWishlist: false,
   translating: false,
+  enriching: false,
   toggle: vi.fn(),
 }))
 
@@ -21,6 +22,7 @@ vi.mock('@/features/shelf/api', async (importOriginal) => ({
   useIsInWishlist: () => ({ data: state.inWishlist }),
   useWishlistToggle: () => ({ mutate: state.toggle, isPending: false }),
   useSummaryTranslation: () => ({ isFetching: state.translating }),
+  useBookEnrichment: () => ({ isFetching: state.enriching }),
 }))
 
 const reading = (id: string, title: string, over: Partial<Reading> = {}): Reading => ({
@@ -53,10 +55,15 @@ describe('groupShelf', () => {
 
 describe('needsTranslation', () => {
   it('só traduz resumos com idioma ainda não verificado', () => {
-    expect(needsTranslation({ summary: 'Three friends.', summary_lang: null })).toBe(true)
-    expect(needsTranslation({ summary: 'Três amigos.', summary_lang: 'pt' })).toBe(false)
-    expect(needsTranslation({ summary: null, summary_lang: null })).toBe(false)
+    const done = '2026-10-28T12:00:00Z'
+    expect(needsTranslation({ summary: 'Three friends.', summary_lang: null, enriched_at: done })).toBe(true)
+    expect(needsTranslation({ summary: 'Três amigos.', summary_lang: 'pt', enriched_at: done })).toBe(false)
+    expect(needsTranslation({ summary: null, summary_lang: null, enriched_at: done })).toBe(false)
     expect(needsTranslation(undefined)).toBe(false)
+  })
+
+  it('espera a Google Books antes de usar a IA (ela costuma ter a sinopse da editora)', () => {
+    expect(needsTranslation({ summary: 'Three friends.', summary_lang: null, enriched_at: null })).toBe(false)
   })
 })
 
@@ -106,6 +113,7 @@ describe('Página do livro', () => {
     state.myReading = null
     state.inWishlist = false
     state.translating = false
+    state.enriching = false
     state.toggle.mockClear()
   })
 
@@ -115,6 +123,12 @@ describe('Página do livro', () => {
     expect(screen.getByText('Valérie Perrin')).toBeInTheDocument()
     expect(screen.getByText('672 páginas')).toBeInTheDocument()
     expect(screen.getByText('sem resumo disponível')).toBeInTheDocument()
+  })
+
+  it('sem resumo, avisa enquanto procura a sinopse em português', () => {
+    state.enriching = true
+    renderApp('/livros/book-1')
+    expect(screen.getByText('buscando a sinopse em português…')).toBeInTheDocument()
   })
 
   it('mostra o resumo quando existe', () => {

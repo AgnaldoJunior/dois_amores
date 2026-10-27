@@ -45,14 +45,14 @@ isOneToOne: false
                   ]
                 },"books": {
                   Row: {
-                    "author": string | null,"cover_url": string | null,"created_at": string,"id": string,"openlibrary_work_key": string,"pages": number | null,"summary": string | null,"summary_lang": string | null,"summary_original": string | null,"summary_source": string,"title": string,"updated_at": string
+                    "author": string | null,"cover_url": string | null,"created_at": string,"enriched_at": string | null,"google_volume_id": string | null,"id": string,"openlibrary_work_key": string,"pages": number | null,"summary": string | null,"summary_lang": string | null,"summary_original": string | null,"summary_source": string,"title": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "author"?: string | null,"cover_url"?: string | null,"created_at"?: string,"id"?: string,"openlibrary_work_key": string,"pages"?: number | null,"summary"?: string | null,"summary_lang"?: string | null,"summary_original"?: string | null,"summary_source"?: string,"title": string,"updated_at"?: string
+                    "author"?: string | null,"cover_url"?: string | null,"created_at"?: string,"enriched_at"?: string | null,"google_volume_id"?: string | null,"id"?: string,"openlibrary_work_key": string,"pages"?: number | null,"summary"?: string | null,"summary_lang"?: string | null,"summary_original"?: string | null,"summary_source"?: string,"title": string,"updated_at"?: string
                   }
                   Update: {
-                    "author"?: string | null,"cover_url"?: string | null,"created_at"?: string,"id"?: string,"openlibrary_work_key"?: string,"pages"?: number | null,"summary"?: string | null,"summary_lang"?: string | null,"summary_original"?: string | null,"summary_source"?: string,"title"?: string,"updated_at"?: string
+                    "author"?: string | null,"cover_url"?: string | null,"created_at"?: string,"enriched_at"?: string | null,"google_volume_id"?: string | null,"id"?: string,"openlibrary_work_key"?: string,"pages"?: number | null,"summary"?: string | null,"summary_lang"?: string | null,"summary_original"?: string | null,"summary_source"?: string,"title"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -349,6 +349,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"refund_ai_quota":
+{ Args: { "p_user_id": string }; Returns: undefined
+                           },
 "regenerate_invite_code":
 { Args: { "p_club_id": string }; Returns: string
                            },
@@ -357,6 +360,8 @@ isOneToOne: false
               "author": string | null,
 "cover_url": string | null,
 "created_at": string,
+"enriched_at": string | null,
+"google_volume_id": string | null,
 "id": string,
 "openlibrary_work_key": string,
 "pages": number | null,

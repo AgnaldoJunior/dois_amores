@@ -11,7 +11,15 @@ import { RANK_FIELDS } from '@/features/readings/validation'
 import { formatDateShort } from '@/lib/dates'
 import { memberAverage } from '@/lib/domain/ratings'
 import { formatCount } from '@/lib/domain/stats'
-import { useBook, useIsInWishlist, useMyReadingOf, useSummaryTranslation, useWishlistToggle, type BookDetail } from './api'
+import {
+  useBook,
+  useBookEnrichment,
+  useIsInWishlist,
+  useMyReadingOf,
+  useSummaryTranslation,
+  useWishlistToggle,
+  type BookDetail,
+} from './api'
 
 /** /livros/:bookId — página do livro (Figma 06) com os dados de leitura do usuário. */
 export function BookPage() {
@@ -60,9 +68,16 @@ export const SUMMARY_PREVIEW_CHARS = 360
  */
 function Summary({ book }: { book: BookDetail }) {
   const [expanded, setExpanded] = useState(false)
+  const enrichment = useBookEnrichment(book)
   const translation = useSummaryTranslation(book)
   const text = book.summary
-  if (!text) return <HandText className="text-center">sem resumo disponível</HandText>
+  if (!text) {
+    return (
+      <HandText className="text-center">
+        {enrichment.isFetching ? 'buscando a sinopse em português…' : 'sem resumo disponível'}
+      </HandText>
+    )
+  }
   const long = text.length > SUMMARY_PREVIEW_CHARS
   const shown = long && !expanded ? `${text.slice(0, SUMMARY_PREVIEW_CHARS).trimEnd()}…` : text
   return (
@@ -77,6 +92,11 @@ function Summary({ book }: { book: BookDetail }) {
         >
           {expanded ? 'mostrar menos' : 'ler resumo completo'}
         </button>
+      )}
+      {enrichment.isFetching && (
+        <p role="status" className="font-mono text-2xs uppercase tracking-label text-primary">
+          buscando a edição em português…
+        </p>
       )}
       {translation.isFetching && (
         <p role="status" className="font-mono text-2xs uppercase tracking-label text-primary">

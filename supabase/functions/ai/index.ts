@@ -1,9 +1,10 @@
 // Edge Function "ai": único ponto do app que fala com o provedor de IA.
 // A chave (GEMINI_API_KEY) fica nos segredos do Supabase e nunca chega ao navegador.
-import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.118.0'
+import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.118.0'
 import { createAiProvider } from '../_shared/ai/index.ts'
 import { parseSummaryTranslation, translateSummaryRequest } from '../_shared/ai/prompts.ts'
 import { AiProviderError } from '../_shared/ai/provider.ts'
+import { createAdminClient, getRequestUser } from '../_shared/auth.ts'
 import { corsHeaders, errorResponse, json } from '../_shared/http.ts'
 
 const DAILY_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT') ?? '20')
@@ -80,14 +81,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return errorResponse('method_not_allowed', 'Use POST', 405)
 
-  const url = Deno.env.get('SUPABASE_URL')!
-  const authHeader = req.headers.get('Authorization') ?? ''
-  const userClient = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, {
-    global: { headers: { Authorization: authHeader } },
-  })
-  const {
-    data: { user },
-  } = await userClient.auth.getUser()
+  const user = await getRequestUser(req)
   if (!user) return errorResponse('unauthorized', 'Entre na sua conta', 401)
 
   let body: Record<string, unknown>
@@ -100,7 +94,7 @@ Deno.serve(async (req) => {
   const action = typeof body.action === 'string' ? actions[body.action] : undefined
   if (!action) return errorResponse('bad_request', 'Ação desconhecida', 400)
 
-  const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+  const admin = createAdminClient()
   const ctx: Context = { userId: user.id, admin, quotaConsumed: false }
   try {
     return await action(ctx, body)

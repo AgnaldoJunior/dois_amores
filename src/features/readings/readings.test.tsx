@@ -29,6 +29,7 @@ vi.mock('@/features/shelf/api', () => ({
   useBook: () => ({ data: { id: 'book-1', title: 'Torto Arado', author: null, pages: 280, cover_url: null, summary: null }, isLoading: false }),
   useMyReadingOf: () => ({ data: null, isLoading: false }),
   useSummaryTranslation: () => ({ isFetching: false }),
+  useBookEnrichment: () => ({ isFetching: false }),
   useIsInWishlist: () => ({ data: false }),
   useWishlistToggle: () => ({ mutate: vi.fn(), isPending: false }),
 }))

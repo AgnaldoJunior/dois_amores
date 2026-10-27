@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { readingKeys, type Reading } from '@/features/readings/api'
 import { translateSummary } from '@/lib/ai/client'
+import { enrichBook } from '@/lib/books/enrich'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { getWorkSummary } from '@/lib/openlibrary/client'
 import { supabase, type Tables } from '@/lib/supabase'
@@ -8,7 +9,16 @@ import { supabase, type Tables } from '@/lib/supabase'
 export type ShelfBook = Pick<Tables<'books'>, 'id' | 'title' | 'author' | 'pages' | 'cover_url'>
 export type BookDetail = Pick<
   Tables<'books'>,
-  'id' | 'title' | 'author' | 'pages' | 'cover_url' | 'summary' | 'openlibrary_work_key' | 'summary_lang' | 'summary_source'
+  | 'id'
+  | 'title'
+  | 'author'
+  | 'pages'
+  | 'cover_url'
+  | 'summary'
+  | 'openlibrary_work_key'
+  | 'summary_lang'
+  | 'summary_source'
+  | 'enriched_at'
 >
 export type WishlistItem = { book: ShelfBook; created_at: string }
 
@@ -68,11 +78,13 @@ export function useBook(bookId: string) {
     queryFn: async (): Promise<BookDetail> => {
       const { data, error } = await supabase
         .from('books')
-        .select(`${SHELF_BOOK}, summary, openlibrary_work_key, summary_lang, summary_source`)
+        .select(`${SHELF_BOOK}, summary, openlibrary_work_key, summary_lang, summary_source, enriched_at`)
         .eq('id', bookId)
         .single()
       if (error) throw error
-      if (data.summary) return data
+      // Sinopse e capa em português vêm da Google Books (useBookEnrichment); a OL só
+      // é consultada aqui quando o livro ainda não tem nenhum resumo.
+      if (data.summary || data.enriched_at) return data
 
       const summary = await getWorkSummary(data.openlibrary_work_key).catch(() => null)
       if (!summary) return data
@@ -87,9 +99,35 @@ export function useBook(bookId: string) {
   })
 }
 
-/** O resumo precisa passar pela IA (idioma ainda não verificado)? */
-export const needsTranslation = (book: Pick<BookDetail, 'summary' | 'summary_lang'> | undefined) =>
-  Boolean(book?.summary && !book.summary_lang)
+/**
+ * O resumo precisa passar pela IA? Só depois que a Google Books já foi consultada
+ * (ela costuma ter a sinopse da editora brasileira) e se o idioma ainda não foi verificado.
+ */
+export const needsTranslation = (
+  book: Pick<BookDetail, 'summary' | 'summary_lang' | 'enriched_at'> | undefined,
+) => Boolean(book?.enriched_at && book.summary && !book.summary_lang)
+
+/**
+ * Completa o livro com a edição em português da Google Books na primeira visita
+ * (capa copiada para o nosso Storage, sinopse da editora, páginas).
+ */
+export function useBookEnrichment(book: BookDetail | undefined) {
+  const queryClient = useQueryClient()
+  return useQuery({
+    queryKey: ['books', book?.id, 'enrichment'],
+    enabled: Boolean(book && !book.enriched_at),
+    retry: false,
+    staleTime: Infinity,
+    queryFn: async () => {
+      const result = await enrichBook(book!.id)
+      queryClient.setQueryData<BookDetail>(shelfKeys.book(book!.id), (old) => (old ? { ...old, ...result } : old))
+      // Capas novas aparecem também na prateleira e no feed.
+      queryClient.invalidateQueries({ queryKey: readingKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
+      return result
+    },
+  })
+}
 
 /**
  * Traduz o resumo para o português na primeira visita (a Edge Function guarda
