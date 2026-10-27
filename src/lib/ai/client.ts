@@ -1,7 +1,7 @@
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
-export type AiErrorCode = 'quota_exceeded' | 'ai_unavailable' | 'unauthorized' | 'unknown'
+export type AiErrorCode = 'quota_exceeded' | 'ai_unavailable' | 'unauthorized' | 'not_enough_data' | 'unknown'
 
 export class AiError extends Error {
   constructor(readonly code: AiErrorCode) {
@@ -14,6 +14,7 @@ export const AI_ERROR_MESSAGES: Record<AiErrorCode, string> = {
   quota_exceeded: 'Você usou todas as sugestões de IA de hoje. Amanhã tem mais!',
   ai_unavailable: 'A IA não respondeu agora. Tente de novo em instantes.',
   unauthorized: 'Entre de novo na sua conta para usar a IA.',
+  not_enough_data: 'Termine pelo menos um livro (com data de fim) para receber sugestões.',
   unknown: 'Não foi possível falar com a IA agora.',
 }
 
@@ -26,7 +27,7 @@ export async function callAi<T>(action: string, payload: Record<string, unknown>
   if (error instanceof FunctionsHttpError) {
     const body = (await error.context.json().catch(() => null)) as { error?: { code?: string } } | null
     const received = body?.error?.code
-    if (received === 'quota_exceeded' || received === 'ai_unavailable' || received === 'unauthorized') code = received
+    if (received && received in AI_ERROR_MESSAGES) code = received as AiErrorCode
   }
   throw new AiError(code)
 }
@@ -38,3 +39,22 @@ export type TranslatedSummary = {
 }
 
 export const translateSummary = (bookId: string) => callAi<TranslatedSummary>('translate-summary', { bookId })
+
+export type QuoteSuggestion = { text: string; context: string | null }
+
+/** Sugestões de citação para o livro (nada é salvo; a pessoa escolhe se usa). */
+export const suggestQuotes = (bookId: string) =>
+  callAi<{ quotes: QuoteSuggestion[] }>('suggest-quotes', { bookId }).then((r) => r.quotes)
+
+export type BookSuggestion = {
+  workKey: string
+  title: string
+  author: string | null
+  coverUrl: string | null
+  pages: number | null
+  reason: string
+}
+
+/** 3 sugestões de próxima leitura, já confirmadas na Open Library pelo servidor. */
+export const suggestNextReads = () =>
+  callAi<{ suggestions: BookSuggestion[] }>('suggest-next-reads').then((r) => r.suggestions)

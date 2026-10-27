@@ -88,6 +88,7 @@ describe('Meus livros', () => {
     expect(within(reading).getByText('desde 10 OUT 2026')).toBeInTheDocument()
 
     expect(within(screen.getByRole('list', { name: 'Quero ler' })).getByRole('link', { name: 'Quarta asa' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'SUGESTÃO DE PRÓXIMA LEITURA' })).toHaveAttribute('href', '/meus-livros/sugestoes')
   })
 
   it('usa um recorte borrado da capa atrás do título', () => {

@@ -12,6 +12,7 @@ import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { todayIso } from '@/lib/dates'
 import type { BookSearchResult } from '@/lib/openlibrary/client'
 import { useBook } from '@/features/shelf/api'
+import { AI_DISCLAIMER, QuoteSuggestions } from './QuoteSuggestions'
 import { ensureBook, findMyReadingId, useDeleteReading, useReading, useSaveReading, type Book } from './api'
 import {
   fromReadingValues,
@@ -77,6 +78,8 @@ function ReadingEditor({ readingId, initialBook, initialForm }: EditorProps) {
   const [errors, setErrors] = useState<ReadingErrors>({})
   const [formError, setFormError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  /** A citação no campo veio de uma sugestão da IA e ainda não foi editada. */
+  const [quoteFromAi, setQuoteFromAi] = useState(false)
 
   const set = <K extends keyof ReadingForm>(key: K, value: ReadingForm[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -202,7 +205,18 @@ function ReadingEditor({ readingId, initialBook, initialForm }: EditorProps) {
         maxLength={2000}
         rows={2}
         value={form.favorite_quote}
-        onChange={(e) => set('favorite_quote', e.target.value)}
+        hint={quoteFromAi ? AI_DISCLAIMER : undefined}
+        onChange={(e) => {
+          set('favorite_quote', e.target.value)
+          setQuoteFromAi(false)
+        }}
+      />
+      <QuoteSuggestions
+        bookId={book?.id ?? null}
+        onUse={(quote) => {
+          set('favorite_quote', quote)
+          setQuoteFromAi(true)
+        }}
       />
       <TextAreaField
         label="Comentário"

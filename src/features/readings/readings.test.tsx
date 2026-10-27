@@ -4,6 +4,7 @@ import { renderApp } from '@/test/renderApp'
 import { toReadingValues, validateReading, type ReadingForm } from './validation'
 
 const mocks = vi.hoisted(() => ({
+  suggestQuotes: vi.fn(),
   searchBooks: vi.fn(),
   ensureBook: vi.fn(),
   findMyReadingId: vi.fn(),
@@ -13,6 +14,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/lib/openlibrary/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/openlibrary/client')>()),
   searchBooks: mocks.searchBooks,
+}))
+
+vi.mock('@/lib/ai/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/ai/client')>()),
+  suggestQuotes: mocks.suggestQuotes,
 }))
 
 vi.mock('@/features/readings/api', () => ({
@@ -131,6 +137,26 @@ describe('Publicar leitura', () => {
     })
     await waitFor(() => expect(router.state.location.pathname).toBe('/livros/book-1'))
     expect(await screen.findByText('Leitura publicada no feed!')).toBeInTheDocument()
+  })
+
+  it('citação sugerida pela IA entra no campo com o aviso e só é gravada ao salvar', async () => {
+    mocks.suggestQuotes.mockResolvedValue([{ text: 'Uma frase marcante do livro.', context: null }])
+    renderApp('/publicar')
+    await chooseBook()
+    await userEvent.click(screen.getByRole('button', { name: 'SUGERIR COM IA' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Usar esta citação' }))
+
+    const field = screen.getByLabelText('Citação favorita')
+    expect(field).toHaveValue('Uma frase marcante do livro.')
+    expect(field).toHaveAccessibleDescription('sugerido por IA, confira se é literal')
+    expect(mocks.save).not.toHaveBeenCalled()
+
+    await userEvent.type(field, ' (editada)')
+    expect(field).not.toHaveAccessibleDescription()
+
+    await userEvent.click(screen.getByRole('button', { name: 'SALVAR' }))
+    await waitFor(() => expect(mocks.save).toHaveBeenCalled())
+    expect(mocks.save.mock.calls[0]![0].values.favorite_quote).toBe('Uma frase marcante do livro. (editada)')
   })
 
   it('mostra erro de data sem chamar o banco', async () => {

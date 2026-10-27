@@ -11,6 +11,7 @@ import { ProfilePage } from '@/features/profile/ProfilePage'
 import { ReadingFormPage } from '@/features/readings/ReadingFormPage'
 import { BookPage } from '@/features/shelf/BookPage'
 import { ShelfPage } from '@/features/shelf/ShelfPage'
+import { SuggestionsPage } from '@/features/shelf/SuggestionsPage'
 import { AppLayout } from './AppLayout'
 import { RequireAuth } from './RequireAuth'
 
@@ -29,6 +30,7 @@ export const routes: RouteObject[] = [
           { index: true, element: <HomePage /> },
           { path: 'feed', element: <FeedPage /> },
           { path: 'meus-livros', element: <ShelfPage /> },
+          { path: 'meus-livros/sugestoes', element: <SuggestionsPage /> },
           { path: 'livros/:bookId', element: <BookPage /> },
           {
             path: 'clubes',

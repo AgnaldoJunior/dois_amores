@@ -4,6 +4,10 @@
  * cada edição é um volume, por isso a identidade do livro continua sendo da OL.
  */
 
+import { authorMatches, normalize, titleScore } from './textMatch.ts'
+
+export { authorMatches, normalize, titleScore }
+
 const API = 'https://www.googleapis.com/books/v1/volumes'
 
 export type GoogleVolume = {
@@ -45,26 +49,6 @@ export function buildSearchUrl(book: BookToEnrich, apiKey: string) {
   return `${API}?${params}`
 }
 
-export const normalize = (text: string) =>
-  text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-/** 3 = título igual; 2 = um começa com o outro; 1 = um contém o outro; 0 = diferente. */
-export function titleScore(candidate: string, wanted: string) {
-  const a = normalize(candidate)
-  const b = normalize(wanted)
-  if (!a || !b) return 0
-  if (a === b) return 3
-  if (a.startsWith(b) || b.startsWith(a)) return 2
-  if (a.includes(b) || b.includes(a)) return 1
-  return 0
-}
-
 /**
  * País da edição pelo prefixo do ISBN (978-65/978-85 = Brasil; 978-972/978-989 = Portugal).
  * O campo `language` não ajuda: edições portuguesas também vêm como "pt-BR".
@@ -80,13 +64,6 @@ export function editionCountry(volume: GoogleVolume): 'BR' | 'PT' | null {
 
 /** Adaptações e pacotes não são a edição do livro (ex.: "Torto arado: Romance gráfico em quadrinhos"). */
 const ADAPTATION = /\b(quadrinhos|graphic novel|romance grafico|hq|box|kit|colecao|box set|edicao de colecionador)\b/
-
-/** O sobrenome do autor aparece entre os autores do volume? */
-export function authorMatches(authors: string[] | undefined, wanted: string | null) {
-  if (!wanted) return true
-  const surname = normalize(wanted).split(' ').at(-1) ?? ''
-  return Boolean(surname) && (authors ?? []).some((a) => normalize(a).split(' ').includes(surname))
-}
 
 /**
  * Escolhe a melhor edição em português: título e autor precisam bater e

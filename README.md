@@ -100,8 +100,13 @@ adaptador e registre em `createAiProvider`.
 - Cada tentativa tem limite de 25 s; com erro 429/5xx ou demora, tenta de novo e passa para o reserva.
 - Limite de 20 chamadas por pessoa por dia (`AI_DAILY_LIMIT`); falhas do provedor devolvem a cota.
 
-Ações disponíveis: `translate-summary` (traduz o resumo da Open Library para o português uma vez
-por livro e guarda o original em `books.summary_original`).
+Ações disponíveis:
+
+| Ação | O que faz |
+|---|---|
+| `translate-summary` | traduz o resumo da Open Library para o português, uma vez por livro (o original fica em `books.summary_original`) |
+| `suggest-quotes` | até 3 citações do livro; o app mostra "sugerido por IA, confira se é literal" e só preenche o campo se a pessoa escolher |
+| `suggest-next-reads` | 3 próximas leituras a partir dos títulos, autores e notas da pessoa; cada sugestão é confirmada na Open Library e o que ela já leu ou tem na lista fica de fora |
 
 ```bash
 # local (todas as funções)

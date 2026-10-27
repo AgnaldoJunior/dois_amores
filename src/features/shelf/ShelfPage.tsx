@@ -84,6 +84,9 @@ export function ShelfPage() {
           <ButtonLink to="/publicar" className="text-base">
             PUBLICAR NOVA LEITURA
           </ButtonLink>
+          <ButtonLink to="/meus-livros/sugestoes" variant="outline" className="text-base">
+            SUGESTÃO DE PRÓXIMA LEITURA
+          </ButtonLink>
         </>
       )}
     </div>

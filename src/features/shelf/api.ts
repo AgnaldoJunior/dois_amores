@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { readingKeys, type Reading } from '@/features/readings/api'
+import { ensureCatalogBook, readingKeys, type CatalogInput, type Reading } from '@/features/readings/api'
 import { translateSummary } from '@/lib/ai/client'
 import { enrichBook } from '@/lib/books/enrich'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
@@ -192,6 +192,23 @@ export function useWishlistToggle() {
         ? await supabase.from('reading_list').upsert({ user_id: user.id, book_id: bookId }, { ignoreDuplicates: true })
         : await supabase.from('reading_list').delete().eq('user_id', user.id).eq('book_id', bookId)
       if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+  })
+}
+
+/** Guarda uma sugestão da IA em "Quero ler": salva no catálogo (com Google Books) e adiciona à lista. */
+export function useAddSuggestionToWishlist() {
+  const user = useCurrentUser()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: CatalogInput) => {
+      const book = await ensureCatalogBook(input)
+      const { error } = await supabase
+        .from('reading_list')
+        .upsert({ user_id: user.id, book_id: book.id }, { ignoreDuplicates: true })
+      if (error) throw error
+      return book
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: readingKeys.all }),
   })

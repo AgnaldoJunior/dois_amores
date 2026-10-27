@@ -36,19 +36,38 @@ export const readingKeys = {
 /** Tempo máximo esperando a Google Books ao escolher o livro (depois completa na página do livro). */
 export const ENRICH_WAIT_MS = 8000
 
+/** Livro vindo da busca ou de uma sugestão da IA (já confirmado na Open Library). */
+export type CatalogInput = {
+  workKey: string
+  title: string
+  author: string | null
+  pages: number | null
+  coverUrl: string | null
+}
+
+/** Livro escolhido na busca. */
+export const ensureBook = (result: BookSearchResult) =>
+  ensureCatalogBook({
+    workKey: result.workKey,
+    title: result.title,
+    author: result.author,
+    pages: result.pages,
+    coverUrl: result.coverId ? coverUrl(result.coverId, 'L') : null,
+  })
+
 /**
- * Salva o livro escolhido no catálogo (se ainda não existir), com resumo da Works API,
+ * Salva o livro no catálogo (se ainda não existir), com resumo da Works API,
  * e tenta completar com a edição em português da Google Books (capa e sinopse).
  */
-export async function ensureBook(result: BookSearchResult): Promise<Book> {
-  const summary = await getWorkSummary(result.workKey).catch(() => null)
+export async function ensureCatalogBook(input: CatalogInput): Promise<Book> {
+  const summary = await getWorkSummary(input.workKey).catch(() => null)
   const { data, error } = await supabase
     .rpc('upsert_book', {
-      p_work_key: result.workKey,
-      p_title: result.title,
-      p_author: result.author ?? undefined,
-      p_pages: result.pages ?? undefined,
-      p_cover_url: result.coverId ? coverUrl(result.coverId, 'L') : undefined,
+      p_work_key: input.workKey,
+      p_title: input.title,
+      p_author: input.author ?? undefined,
+      p_pages: input.pages ?? undefined,
+      p_cover_url: input.coverUrl ?? undefined,
       p_summary: summary ?? undefined,
     })
     .select(BOOK_FIELDS)

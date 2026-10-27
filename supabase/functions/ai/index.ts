@@ -2,10 +2,19 @@
 // A chave (GEMINI_API_KEY) fica nos segredos do Supabase e nunca chega ao navegador.
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.118.0'
 import { createAiProvider } from '../_shared/ai/index.ts'
-import { parseSummaryTranslation, translateSummaryRequest } from '../_shared/ai/prompts.ts'
+import {
+  parseQuotes,
+  parseSuggestions,
+  parseSummaryTranslation,
+  suggestNextReadsRequest,
+  suggestQuotesRequest,
+  translateSummaryRequest,
+  type ReadingForSuggestion,
+} from '../_shared/ai/prompts.ts'
 import { AiProviderError } from '../_shared/ai/provider.ts'
 import { createAdminClient, getRequestUser } from '../_shared/auth.ts'
 import { corsHeaders, errorResponse, json } from '../_shared/http.ts'
+import { averageOf, verifySuggestions } from '../_shared/suggestions.ts'
 
 const DAILY_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT') ?? '20')
 
@@ -73,8 +82,87 @@ async function translateSummary(ctx: Context, body: { bookId?: unknown }) {
   return json(current)
 }
 
+const quotaExceeded = () => errorResponse('quota_exceeded', 'Limite diário de uso da IA atingido', 429)
+
+/** Sugere citações do livro. Nada é salvo: o app mostra e a pessoa decide se usa. */
+async function suggestQuotes(ctx: Context, body: { bookId?: unknown }) {
+  if (typeof body.bookId !== 'string') return errorResponse('bad_request', 'bookId obrigatório', 400)
+  const { data: book, error } = await ctx.admin
+    .from('books')
+    .select('title, author, summary')
+    .eq('id', body.bookId)
+    .maybeSingle()
+  if (error) throw error
+  if (!book) return errorResponse('not_found', 'Livro não encontrado', 404)
+
+  if (!(await consumeQuota(ctx))) return quotaExceeded()
+  const ai = createAiProvider(Deno.env)
+  const quotes = parseQuotes(await ai.generateJson(suggestQuotesRequest(book)))
+  return json({ quotes })
+}
+
+type ReadingRow = {
+  finished_on: string | null
+  rank_characters: number | null
+  rank_plot: number | null
+  rank_writing: number | null
+  rank_ending: number | null
+  book: { title: string; author: string | null; openlibrary_work_key: string } | null
+}
+
+/**
+ * 3 sugestões de próxima leitura a partir dos livros e notas da pessoa.
+ * Cada sugestão é confirmada na Open Library antes de ser devolvida.
+ */
+async function suggestNextReads(ctx: Context) {
+  const [readings, wishlist] = await Promise.all([
+    ctx.admin
+      .from('user_books')
+      .select(
+        'finished_on, rank_characters, rank_plot, rank_writing, rank_ending, book:books(title, author, openlibrary_work_key)',
+      )
+      .eq('user_id', ctx.userId)
+      .order('finished_on', { ascending: false, nullsFirst: false })
+      .limit(60)
+      .returns<ReadingRow[]>(),
+    ctx.admin
+      .from('reading_list')
+      .select('book:books(title, author, openlibrary_work_key)')
+      .eq('user_id', ctx.userId)
+      .returns<{ book: ReadingRow['book'] }[]>(),
+  ])
+  if (readings.error) throw readings.error
+  if (wishlist.error) throw wishlist.error
+
+  const history: ReadingForSuggestion[] = readings.data
+    .filter((r) => r.book)
+    .map((r) => ({
+      title: r.book!.title,
+      author: r.book!.author,
+      average: averageOf([r.rank_characters, r.rank_plot, r.rank_writing, r.rank_ending]),
+      finished: Boolean(r.finished_on),
+    }))
+  if (!history.some((r) => r.finished)) {
+    return errorResponse('not_enough_data', 'Termine pelo menos um livro para receber sugestões', 400)
+  }
+
+  const known = [...readings.data, ...wishlist.data].map((r) => r.book).filter((b) => b !== null)
+  if (!(await consumeQuota(ctx))) return quotaExceeded()
+  const ai = createAiProvider(Deno.env)
+  const raw = parseSuggestions(
+    await ai.generateJson(suggestNextReadsRequest(history, wishlist.data.flatMap((w) => (w.book ? [w.book.title] : [])))),
+  )
+  const suggestions = await verifySuggestions(
+    raw,
+    known.map((b) => b.openlibrary_work_key),
+  )
+  return json({ suggestions })
+}
+
 const actions: Record<string, (ctx: Context, body: Record<string, unknown>) => Promise<Response>> = {
   'translate-summary': translateSummary,
+  'suggest-quotes': suggestQuotes,
+  'suggest-next-reads': suggestNextReads,
 }
 
 Deno.serve(async (req) => {
