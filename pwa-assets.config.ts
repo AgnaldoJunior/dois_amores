@@ -1,5 +1,5 @@
 import { defineConfig, minimal2023Preset } from '@vite-pwa/assets-generator/config'
-import { tokens } from './src/theme/tokens'
+import { tokens } from './src/theme/tokens.ts'
 
 export default defineConfig({
   headLinkOptions: { preset: '2023' },

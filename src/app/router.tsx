@@ -12,6 +12,7 @@ import { ProposePage } from '@/features/clubs/ProposePage'
 import { FeedPage } from '@/features/feed/FeedPage'
 import { HomePage } from '@/features/home/HomePage'
 import { PrivacyPage } from '@/features/legal/PrivacyPage'
+import { MagazinePage } from '@/features/magazine/MagazinePage'
 import { PlaceholderPage } from '@/features/placeholder/PlaceholderPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { ReadingFormPage } from '@/features/readings/ReadingFormPage'
@@ -44,10 +45,7 @@ export const routes: RouteObject[] = [
           { path: 'clubes/:clubId/propor', element: <ProposePage /> },
           { path: 'clubes/:clubId/sugestoes', element: <ClubSuggestionsPage /> },
           { path: 'clubes/:clubId/membros/:userId', element: <MemberPage /> },
-          {
-            path: 'clubes/:clubId/revista',
-            element: <PlaceholderPage title="Exportar revista" message="A revista em PDF chega na próxima etapa." />,
-          },
+          { path: 'clubes/:clubId/revista', element: <MagazinePage /> },
           { path: 'publicar', element: <ReadingFormPage /> },
           { path: 'leituras/:id/editar', element: <ReadingFormPage /> },
           { path: 'perfil', element: <ProfilePage /> },

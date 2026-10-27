@@ -137,6 +137,8 @@ export const tokens = {
     'cover-xs-h': 56,
     'club-xs-w': 56,
     'club-xs-h': 80,
+    /** listras rosa e creme da capa da revista (prévia) */
+    stripe: 12,
     'cover-sm-w': 80,
     'cover-sm-h': 120,
     'cover-md-w': 100,
