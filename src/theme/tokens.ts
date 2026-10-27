@@ -135,6 +135,8 @@ export const tokens = {
     'avatar-lg': 88,
     'cover-xs-w': 40,
     'cover-xs-h': 56,
+    'club-xs-w': 56,
+    'club-xs-h': 80,
     'cover-sm-w': 80,
     'cover-sm-h': 120,
     'cover-md-w': 100,

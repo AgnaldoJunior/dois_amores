@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 const sizeClass = {
   xs: 'w-cover-xs-w h-cover-xs-h rounded-sm',
+  club: 'w-club-xs-w h-club-xs-h rounded-card',
   sm: 'w-cover-sm-w h-cover-sm-h rounded-card',
   md: 'w-cover-md-w h-cover-md-h rounded-card',
   lg: 'w-cover-lg-w h-cover-lg-h rounded-card',
@@ -9,6 +10,7 @@ const sizeClass = {
 
 const titleClass = {
   xs: 'hidden',
+  club: 'text-2xs',
   sm: 'text-sm',
   md: 'text-md',
   lg: 'text-lg',

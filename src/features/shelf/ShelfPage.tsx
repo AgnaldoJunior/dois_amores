@@ -3,6 +3,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { Stars } from '@/components/ui/Stars'
 import { Label, PageTitle, SectionTitle } from '@/components/ui/Typography'
+import { useBackgroundEnrichment } from '@/lib/books/useBackgroundEnrichment'
 import { formatDateShort } from '@/lib/dates'
 import { memberAverage } from '@/lib/domain/ratings'
 import { useShelf } from './api'
@@ -12,6 +13,7 @@ export const bookPath = (bookId: string) => `/livros/${bookId}`
 
 export function ShelfPage() {
   const { data, isLoading, isError } = useShelf()
+  useBackgroundEnrichment(data && [...data.read, ...data.reading, ...data.wishlist].map((r) => r.book))
 
   return (
     <div className="flex flex-col gap-4">

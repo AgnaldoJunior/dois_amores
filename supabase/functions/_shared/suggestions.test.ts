@@ -1,4 +1,10 @@
-import { parseQuotes, parseSuggestions, suggestNextReadsRequest, suggestQuotesRequest } from './ai/prompts.ts'
+import {
+  parseQuotes,
+  parseSuggestions,
+  suggestClubReadsRequest,
+  suggestNextReadsRequest,
+  suggestQuotesRequest,
+} from './ai/prompts.ts'
 import { pickVerified, verifyBook } from './openLibrary.ts'
 import { averageOf, verifySuggestions } from './suggestions.ts'
 
@@ -44,6 +50,16 @@ describe('próxima leitura', () => {
     expect(req.prompt).toContain('- Três (Valérie Perrin): nota 4.5/5')
     expect(req.prompt).toContain('- A hora da estrela (Clarice Lispector): lendo agora')
     expect(req.prompt).toContain('Não sugira estes (já lidos ou na lista): Quarta asa')
+  })
+
+  it('clube: envia a média de cada membro por livro, sem nomes', () => {
+    const req = suggestClubReadsRequest(
+      [{ title: 'Três', author: 'Valérie Perrin', memberAverages: [4.5, 4.75, null, 4.5] }],
+      ['Torto arado'],
+    )
+    expect(req.prompt).toContain('- Três (Valérie Perrin) → Membro 1: 4.5, Membro 2: 4.8, Membro 3: —, Membro 4: 4.5')
+    expect(req.prompt).toContain('Não sugira estes: Torto arado')
+    expect(req.prompt).not.toMatch(/Leyna|Irla/)
   })
 
   it('valida as sugestões', () => {

@@ -6,7 +6,7 @@ import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { getWorkSummary } from '@/lib/openlibrary/client'
 import { supabase, type Tables } from '@/lib/supabase'
 
-export type ShelfBook = Pick<Tables<'books'>, 'id' | 'title' | 'author' | 'pages' | 'cover_url'>
+export type ShelfBook = Pick<Tables<'books'>, 'id' | 'title' | 'author' | 'pages' | 'cover_url'> & { enriched_at?: string | null }
 export type BookDetail = Pick<
   Tables<'books'>,
   | 'id'
@@ -28,7 +28,7 @@ export type Shelf = {
   wishlist: WishlistItem[]
 }
 
-const SHELF_BOOK = 'id, title, author, pages, cover_url'
+const SHELF_BOOK = 'id, title, author, pages, cover_url, enriched_at'
 const READING_FIELDS = `id, started_on, finished_on, rank_characters, rank_plot, rank_writing, rank_ending,
   favorite_character, favorite_quote, comment, book:books(${SHELF_BOOK}, summary)`
 

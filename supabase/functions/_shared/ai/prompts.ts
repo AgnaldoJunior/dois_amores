@@ -190,3 +190,62 @@ export function parseSuggestions(raw: unknown): RawSuggestion[] {
     .filter((s) => s.title && s.author)
     .slice(0, SUGGESTION_CANDIDATES)
 }
+
+// -----------------------------------------------------------------------------
+// Próxima leitura do clube
+// -----------------------------------------------------------------------------
+
+export type ClubBookForSuggestion = {
+  title: string
+  author: string | null
+  /** Média de cada membro (anônimo, na mesma ordem para todos os livros); null = não avaliou. */
+  memberAverages: (number | null)[]
+}
+
+/**
+ * A IA recebe os livros do clube e a média das 4 notas de cada membro para cada
+ * livro. Os membros vão como "Membro 1, 2…" (nomes não saem do app).
+ */
+export function suggestClubReadsRequest(books: ClubBookForSuggestion[], avoid: string[]): JsonRequest {
+  const lines = books.map((b) => {
+    const notes = b.memberAverages
+      .map((avg, i) => `Membro ${i + 1}: ${avg == null ? '—' : avg.toFixed(1)}`)
+      .join(', ')
+    return `- ${b.title}${b.author ? ` (${b.author})` : ''} → ${notes}`
+  })
+  return {
+    system:
+      'Você é uma livreira que escolhe o próximo livro de um clube de leitura. Recomende apenas livros que ' +
+      'existem de verdade, com título e autor exatos; prefira o título da edição brasileira quando existir. ' +
+      'Busque livros que agradem o grupo como um todo, considerando onde as notas concordam e discordam. ' +
+      'Não repita livros do clube. Varie autores. Justificativas curtas, em português do Brasil.',
+    prompt: [
+      'Livros do clube com a média (1 a 5) de cada membro:',
+      ...lines,
+      avoid.length ? `\nNão sugira estes: ${avoid.join('; ')}` : '',
+      '',
+      `Sugira ${SUGGESTION_CANDIDATES} livros em JSON, campo "suggestions", cada um com:`,
+      '- title: título (de preferência da edição brasileira);',
+      '- author: autor ou autora;',
+      '- reason: por que combina com o clube, citando livros do histórico (até 90 caracteres).',
+    ]
+      .filter(Boolean)
+      .join('\n'),
+    schema: {
+      type: 'object',
+      properties: {
+        suggestions: {
+          type: 'array',
+          maxItems: SUGGESTION_CANDIDATES,
+          items: {
+            type: 'object',
+            properties: { title: { type: 'string' }, author: { type: 'string' }, reason: { type: 'string' } },
+            required: ['title', 'author', 'reason'],
+          },
+        },
+      },
+      required: ['suggestions'],
+    },
+    temperature: 0.7,
+  }
+}

@@ -6,6 +6,7 @@ import {
   parseQuotes,
   parseSuggestions,
   parseSummaryTranslation,
+  suggestClubReadsRequest,
   suggestNextReadsRequest,
   suggestQuotesRequest,
   translateSummaryRequest,
@@ -159,7 +160,67 @@ async function suggestNextReads(ctx: Context) {
   return json({ suggestions })
 }
 
+type ClubBookRow = {
+  status: string
+  book: { id: string; title: string; author: string | null; openlibrary_work_key: string } | null
+}
+
+/**
+ * 3 sugestões para o clube: a IA recebe os livros do clube e a média das 4 notas
+ * de cada membro em cada livro; cada sugestão é confirmada na Open Library.
+ */
+async function suggestClubReads(ctx: Context, body: { clubId?: unknown }) {
+  if (typeof body.clubId !== 'string') return errorResponse('bad_request', 'clubId obrigatório', 400)
+
+  const { data: members, error: membersError } = await ctx.admin
+    .from('club_members')
+    .select('user_id')
+    .eq('club_id', body.clubId)
+    .order('joined_at')
+  if (membersError) throw membersError
+  const memberIds = members.map((m) => m.user_id as string)
+  if (!memberIds.includes(ctx.userId)) return errorResponse('not_found', 'Clube não encontrado', 404)
+
+  const { data: clubBooks, error: booksError } = await ctx.admin
+    .from('club_books')
+    .select('status, book:books(id, title, author, openlibrary_work_key)')
+    .eq('club_id', body.clubId)
+    .returns<ClubBookRow[]>()
+  if (booksError) throw booksError
+  const read = clubBooks.filter((cb) => cb.book && (cb.status === 'finished' || cb.status === 'reading'))
+  if (read.length === 0) {
+    return errorResponse('not_enough_data', 'O clube ainda não leu nenhum livro', 400)
+  }
+
+  const { data: readings, error: readingsError } = await ctx.admin
+    .from('user_books')
+    .select('user_id, book_id, rank_characters, rank_plot, rank_writing, rank_ending')
+    .in('book_id', read.map((cb) => cb.book!.id))
+    .in('user_id', memberIds)
+  if (readingsError) throw readingsError
+
+  const books = read.map((cb) => ({
+    title: cb.book!.title,
+    author: cb.book!.author,
+    memberAverages: memberIds.map((uid) => {
+      const r = readings.find((x) => x.user_id === uid && x.book_id === cb.book!.id)
+      return r ? averageOf([r.rank_characters, r.rank_plot, r.rank_writing, r.rank_ending]) : null
+    }),
+  }))
+  const pending = clubBooks.filter((cb) => cb.book && cb.status === 'pending').map((cb) => cb.book!.title)
+
+  if (!(await consumeQuota(ctx))) return quotaExceeded()
+  const ai = createAiProvider(Deno.env)
+  const raw = parseSuggestions(await ai.generateJson(suggestClubReadsRequest(books, pending)))
+  const suggestions = await verifySuggestions(
+    raw,
+    clubBooks.flatMap((cb) => (cb.book ? [cb.book.openlibrary_work_key] : [])),
+  )
+  return json({ suggestions })
+}
+
 const actions: Record<string, (ctx: Context, body: Record<string, unknown>) => Promise<Response>> = {
+  'suggest-club-reads': suggestClubReads,
   'translate-summary': translateSummary,
   'suggest-quotes': suggestQuotes,
   'suggest-next-reads': suggestNextReads,

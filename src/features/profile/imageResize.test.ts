@@ -1,4 +1,4 @@
-import { squareCrop, validateAvatarFile } from './imageResize'
+import { aspectCrop, squareCrop, validateAvatarFile } from './imageResize'
 
 describe('recorte do avatar', () => {
   it('recorta o centro de uma foto em pé', () => {
@@ -11,6 +11,16 @@ describe('recorte do avatar', () => {
 
   it('mantém imagens já quadradas', () => {
     expect(squareCrop(512, 512)).toEqual({ sx: 0, sy: 0, side: 512 })
+  })
+})
+
+describe('recorte da capa do clube (2:3)', () => {
+  it('foto deitada: corta as laterais', () => {
+    expect(aspectCrop(1200, 900, 2 / 3)).toEqual({ sx: 300, sy: 0, sw: 600, sh: 900 })
+  })
+
+  it('foto em pé mais alta que 2:3: corta em cima e embaixo', () => {
+    expect(aspectCrop(600, 1200, 2 / 3)).toEqual({ sx: 0, sy: 150, sw: 600, sh: 900 })
   })
 })
 

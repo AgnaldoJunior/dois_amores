@@ -3,6 +3,12 @@ import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { SignUpPage } from '@/features/auth/SignUpPage'
+import { ClubPage } from '@/features/clubs/ClubPage'
+import { ClubsPage } from '@/features/clubs/ClubsPage'
+import { ClubSuggestionsPage } from '@/features/clubs/ClubSuggestionsPage'
+import { CreateClubPage } from '@/features/clubs/CreateClubPage'
+import { MemberPage } from '@/features/clubs/MemberPage'
+import { ProposePage } from '@/features/clubs/ProposePage'
 import { FeedPage } from '@/features/feed/FeedPage'
 import { HomePage } from '@/features/home/HomePage'
 import { PrivacyPage } from '@/features/legal/PrivacyPage'
@@ -32,9 +38,15 @@ export const routes: RouteObject[] = [
           { path: 'meus-livros', element: <ShelfPage /> },
           { path: 'meus-livros/sugestoes', element: <SuggestionsPage /> },
           { path: 'livros/:bookId', element: <BookPage /> },
+          { path: 'clubes', element: <ClubsPage /> },
+          { path: 'clubes/novo', element: <CreateClubPage /> },
+          { path: 'clubes/:clubId', element: <ClubPage /> },
+          { path: 'clubes/:clubId/propor', element: <ProposePage /> },
+          { path: 'clubes/:clubId/sugestoes', element: <ClubSuggestionsPage /> },
+          { path: 'clubes/:clubId/membros/:userId', element: <MemberPage /> },
           {
-            path: 'clubes',
-            element: <PlaceholderPage title="Clubes" message="Seus clubes de leitura vão aparecer aqui." />,
+            path: 'clubes/:clubId/revista',
+            element: <PlaceholderPage title="Exportar revista" message="A revista em PDF chega na próxima etapa." />,
           },
           { path: 'publicar', element: <ReadingFormPage /> },
           { path: 'leituras/:id/editar', element: <ReadingFormPage /> },

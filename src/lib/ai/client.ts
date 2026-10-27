@@ -58,3 +58,7 @@ export type BookSuggestion = {
 /** 3 sugestões de próxima leitura, já confirmadas na Open Library pelo servidor. */
 export const suggestNextReads = () =>
   callAi<{ suggestions: BookSuggestion[] }>('suggest-next-reads').then((r) => r.suggestions)
+
+/** 3 sugestões para o clube (livros e notas de cada membro), confirmadas na Open Library. */
+export const suggestClubReads = (clubId: string) =>
+  callAi<{ suggestions: BookSuggestion[] }>('suggest-club-reads', { clubId }).then((r) => r.suggestions)

@@ -5,7 +5,10 @@ import { computeReadingStats } from '@/lib/domain/stats'
 import { coverUrl, getWorkSummary, type BookSearchResult } from '@/lib/openlibrary/client'
 import { supabase, type Tables } from '@/lib/supabase'
 
-export type Book = Pick<Tables<'books'>, 'id' | 'title' | 'author' | 'pages' | 'cover_url' | 'summary'>
+export type Book = Pick<Tables<'books'>, 'id' | 'title' | 'author' | 'pages' | 'cover_url' | 'summary'> & {
+  /** Só presente quando a consulta pede; null = ainda não passou pela Google Books. */
+  enriched_at?: string | null
+}
 
 export type ReadingValues = Pick<
   Tables<'user_books'>,

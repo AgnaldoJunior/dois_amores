@@ -22,6 +22,18 @@ describe('Google Books', () => {
     expect(url.searchParams.get('key')).toBe('chave')
   })
 
+  it('tenta a busca livre e depois a filtrada por título e autor', async () => {
+    const reply = { items: [volume('ok', { title: 'O massacre da família Hope', authors: ['Riley Sager'], language: 'pt', description: 'Sinopse longa o bastante para valer.', imageLinks: { thumbnail: thumb } })] }
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ totalItems: 0 })))
+      .mockResolvedValueOnce(new Response(JSON.stringify(reply)))
+    const result = await searchPortugueseEdition({ title: 'O massacre da família Hope', author: 'Riley Sager' }, 'k', { fetchFn })
+    expect(result?.volumeId).toBe('ok')
+    const queries = fetchFn.mock.calls.map((c) => new URL(String(c[0])).searchParams.get('q'))
+    expect(queries).toEqual(['O massacre da família Hope Riley Sager', 'intitle:O massacre da família Hope inauthor:Sager'])
+  })
+
   it('compara títulos ignorando acentos, caixa e pontuação', () => {
     expect(titleScore('Água Fresca para as Flores', 'agua fresca para as flores')).toBe(3)
     expect(titleScore('Torto Arado (Prémio LeYa 2018)', 'Torto arado')).toBe(2)

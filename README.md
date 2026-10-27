@@ -107,6 +107,7 @@ Ações disponíveis:
 | `translate-summary` | traduz o resumo da Open Library para o português, uma vez por livro (o original fica em `books.summary_original`) |
 | `suggest-quotes` | até 3 citações do livro; o app mostra "sugerido por IA, confira se é literal" e só preenche o campo se a pessoa escolher |
 | `suggest-next-reads` | 3 próximas leituras a partir dos títulos, autores e notas da pessoa; cada sugestão é confirmada na Open Library e o que ela já leu ou tem na lista fica de fora |
+| `suggest-club-reads` | 3 sugestões para o clube: a IA recebe os livros do clube e a média das 4 notas de cada membro em cada livro (membros anônimos: "Membro 1, 2…"); cada sugestão é confirmada na Open Library |
 
 ```bash
 # local (todas as funções)

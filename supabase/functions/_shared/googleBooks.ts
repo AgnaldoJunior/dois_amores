@@ -37,10 +37,21 @@ export type Enrichment = {
   fromPortugal: boolean
 }
 
-/** Busca livre (título + autor). Filtros rígidos intitle/inauthor deixavam livros conhecidos de fora. */
-export function buildSearchUrl(book: BookToEnrich, apiKey: string) {
+/**
+ * Consultas, na ordem: busca livre (título + autor) e, se ela não achar, com filtros
+ * intitle/inauthor. Nenhuma das duas sozinha encontra tudo (a API é inconsistente:
+ * "Torto arado" só aparece na livre; "O massacre da família Hope", às vezes só na filtrada).
+ */
+export function searchQueries(book: BookToEnrich): string[] {
+  const free = [book.title, book.author].filter(Boolean).join(' ')
+  const surname = book.author?.trim().split(/\s+/).at(-1)
+  const filtered = `intitle:${book.title}${surname ? ` inauthor:${surname}` : ''}`
+  return [free, filtered]
+}
+
+export function buildSearchUrl(book: BookToEnrich, apiKey: string, query = searchQueries(book)[0]!) {
   const params = new URLSearchParams({
-    q: [book.title, book.author].filter(Boolean).join(' '),
+    q: query,
     langRestrict: 'pt',
     printType: 'books',
     maxResults: '10',
@@ -138,20 +149,26 @@ export async function searchPortugueseEdition(
   apiKey: string,
   { fetchFn = fetch as FetchLike, sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms)), attempts = 4 } = {},
 ): Promise<Enrichment | null> {
-  const url = buildSearchUrl(book, apiKey)
-  for (let i = 0; i < attempts; i++) {
-    if (i > 0) await sleep(800 * i)
-    let res: Response
-    try {
-      res = await fetchFn(url, { signal: AbortSignal.timeout(10_000) })
-    } catch {
-      continue
+  let answered = false
+  for (const query of searchQueries(book)) {
+    const url = buildSearchUrl(book, apiKey, query)
+    for (let i = 0; i < attempts; i++) {
+      if (i > 0) await sleep(800 * i)
+      let res: Response
+      try {
+        res = await fetchFn(url, { signal: AbortSignal.timeout(10_000) })
+      } catch {
+        continue
+      }
+      if (res.status >= 500 || res.status === 429) continue
+      if (!res.ok) throw new Error(`Google Books respondeu ${res.status}`)
+      answered = true
+      const json = (await res.json()) as { items?: GoogleVolume[] }
+      const best = pickBestVolume(json.items ?? [], book)
+      if (best) return toEnrichment(best)
+      break // respondeu sem resultado útil: tenta a próxima consulta
     }
-    if (res.status >= 500 || res.status === 429) continue
-    if (!res.ok) throw new Error(`Google Books respondeu ${res.status}`)
-    const json = (await res.json()) as { items?: GoogleVolume[] }
-    const best = pickBestVolume(json.items ?? [], book)
-    return best ? toEnrichment(best) : null
   }
+  if (answered) return null
   throw new Error('Google Books indisponível')
 }
