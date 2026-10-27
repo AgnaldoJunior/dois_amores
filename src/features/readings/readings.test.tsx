@@ -25,6 +25,13 @@ vi.mock('@/features/readings/api', () => ({
   useRecentReadings: () => ({ data: [], isLoading: false }),
 }))
 
+vi.mock('@/features/shelf/api', () => ({
+  useBook: () => ({ data: { id: 'book-1', title: 'Torto Arado', author: null, pages: 280, cover_url: null, summary: null }, isLoading: false }),
+  useMyReadingOf: () => ({ data: null, isLoading: false }),
+  useIsInWishlist: () => ({ data: false }),
+  useWishlistToggle: () => ({ mutate: vi.fn(), isPending: false }),
+}))
+
 vi.mock('@/features/profile/api', () => ({
   useProfile: () => ({ data: { id: 'user-1', name: 'Leyna', avatar_url: null, bio: null } }),
 }))
@@ -120,7 +127,7 @@ describe('Publicar leitura', () => {
         comment: 'Necessário.',
       }),
     })
-    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/livros/book-1'))
     expect(await screen.findByText('Leitura publicada no feed!')).toBeInTheDocument()
   })
 

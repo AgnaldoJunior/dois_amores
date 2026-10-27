@@ -25,7 +25,7 @@ function StatCard({ value, label }: { value: number | undefined; label: string }
 function RecentReading({ reading }: { reading: Reading }) {
   const average = memberAverage(reading)
   return (
-    <Link to={`/leituras/${reading.id}/editar`} className="block">
+    <Link to={`/livros/${reading.book.id}`} className="block">
       <Card className="flex flex-col gap-1.5">
         <p className="font-sans text-base text-primary">
           {[reading.book.title, reading.book.author].filter(Boolean).join(' · ')}

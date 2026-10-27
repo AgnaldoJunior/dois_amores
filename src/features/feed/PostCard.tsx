@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { BookCover } from '@/components/ui/BookCover'
 import { Card } from '@/components/ui/Card'
 import { Stars } from '@/components/ui/Stars'
@@ -18,7 +19,11 @@ export function PostCard({ post }: { post: FeedPost }) {
       <BookCover title={book.title} url={book.cover_url} size="sm" decorative />
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <p className="font-script text-title-sm leading-tight text-primary">{name}</p>
-        <h2 className="font-display text-title-md uppercase leading-none text-primary break-words">{book.title}</h2>
+        <h2 className="font-display text-title-md uppercase leading-none text-primary break-words">
+          <Link to={`/livros/${book.id}`} className="underline-offset-4 hover:underline">
+            {book.title}
+          </Link>
+        </h2>
         {book.author && <p className="font-mono text-xs uppercase text-primary">{book.author}</p>}
         <Stars value={average} size="post" label={average == null ? 'Sem nota' : undefined} />
         {reading.finished_on && (

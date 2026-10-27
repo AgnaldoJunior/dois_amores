@@ -54,10 +54,10 @@ describe('navegação principal', () => {
     expect(screen.getByText('Páginas lidas')).toBeInTheDocument()
   })
 
-  it('a tela inicial lista as leituras recentes com link para editar', () => {
+  it('a tela inicial lista as leituras recentes com link para a página do livro', () => {
     renderApp('/')
     const link = screen.getByRole('link', { name: /Três · Valérie Perrin/ })
-    expect(link).toHaveAttribute('href', '/leituras/r1/editar')
+    expect(link).toHaveAttribute('href', '/livros/b1')
     expect(screen.getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
   })
 

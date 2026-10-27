@@ -9,6 +9,8 @@ import { PrivacyPage } from '@/features/legal/PrivacyPage'
 import { PlaceholderPage } from '@/features/placeholder/PlaceholderPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { ReadingFormPage } from '@/features/readings/ReadingFormPage'
+import { BookPage } from '@/features/shelf/BookPage'
+import { ShelfPage } from '@/features/shelf/ShelfPage'
 import { AppLayout } from './AppLayout'
 import { RequireAuth } from './RequireAuth'
 
@@ -26,10 +28,8 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <HomePage /> },
           { path: 'feed', element: <FeedPage /> },
-          {
-            path: 'meus-livros',
-            element: <PlaceholderPage title="Meus livros" message="Sua prateleira está sendo montada." />,
-          },
+          { path: 'meus-livros', element: <ShelfPage /> },
+          { path: 'livros/:bookId', element: <BookPage /> },
           {
             path: 'clubes',
             element: <PlaceholderPage title="Clubes" message="Seus clubes de leitura vão aparecer aqui." />,

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { BookSearch } from '@/components/BookSearch'
 import { BookCover } from '@/components/ui/BookCover'
 import { Button } from '@/components/ui/Button'
@@ -11,6 +11,7 @@ import { PageTitle } from '@/components/ui/Typography'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { todayIso } from '@/lib/dates'
 import type { BookSearchResult } from '@/lib/openlibrary/client'
+import { useBook } from '@/features/shelf/api'
 import { ensureBook, findMyReadingId, useDeleteReading, useReading, useSaveReading, type Book } from './api'
 import {
   fromReadingValues,
@@ -36,8 +37,18 @@ const emptyForm = (): ReadingForm => ({
 /** /publicar (nova leitura) e /leituras/:id/editar */
 export function ReadingFormPage() {
   const { id } = useParams()
-  if (!id) return <ReadingEditor key="new" initialBook={null} initialForm={emptyForm()} />
-  return <EditReadingLoader id={id} />
+  const [params] = useSearchParams()
+  const presetBookId = params.get('livro')
+  if (id) return <EditReadingLoader id={id} />
+  if (presetBookId) return <PresetBookLoader bookId={presetBookId} />
+  return <ReadingEditor key="new" initialBook={null} initialForm={emptyForm()} />
+}
+
+/** /publicar?livro=<id>: vindo da página do livro ou da lista "Quero ler". */
+function PresetBookLoader({ bookId }: { bookId: string }) {
+  const { data, isLoading } = useBook(bookId)
+  if (isLoading) return <p className="font-hand text-lg text-primary">Carregando livro…</p>
+  return <ReadingEditor key={bookId} initialBook={data ?? null} initialForm={emptyForm()} />
 }
 
 function EditReadingLoader({ id }: { id: string }) {
@@ -97,15 +108,20 @@ function ReadingEditor({ readingId, initialBook, initialForm }: EditorProps) {
     setFormError('')
     try {
       await save.mutateAsync({ id: readingId, bookId: book.id, values: toReadingValues(form) })
-      navigate('/', {
+      navigate(`/livros/${book.id}`, {
+        replace: true,
         state: {
           flash: form.finished_on
             ? 'Leitura publicada no feed!'
             : 'Leitura salva. Quando terminar, preencha a data de fim para publicar no feed.',
         },
       })
-    } catch {
-      setFormError('Não foi possível salvar. Tente de novo.')
+    } catch (err) {
+      setFormError(
+        (err as { code?: string }).code === '23505'
+          ? 'Você já registrou este livro. Abra-o em Meus livros para editar.'
+          : 'Não foi possível salvar. Tente de novo.',
+      )
     }
   }
 
@@ -113,7 +129,7 @@ function ReadingEditor({ readingId, initialBook, initialForm }: EditorProps) {
     if (!readingId) return
     try {
       await remove.mutateAsync(readingId)
-      navigate('/', { state: { flash: 'Leitura excluída.' } })
+      navigate('/meus-livros', { replace: true })
     } catch {
       setFormError('Não foi possível excluir. Tente de novo.')
     }
