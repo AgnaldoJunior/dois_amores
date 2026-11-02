@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Avatar } from '@/components/ui/Avatar'
+import { BackLink } from '@/components/ui/BackLink'
 import { Button, buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { FormMessage } from '@/components/ui/FormMessage'
@@ -12,7 +13,8 @@ import { supabase } from '@/lib/supabase'
 import { deleteMyAccount, useProfile, useUpdateProfile, useUploadAvatar, type Profile } from './api'
 import { AVATAR_ACCEPT, validateAvatarFile } from './imageResize'
 
-export function ProfilePage() {
+/** /perfil/editar — foto, nome, bio, sair e excluir conta. */
+export function ProfileEditPage() {
   const { data: profile, isLoading } = useProfile()
   if (isLoading || !profile) {
     return <p className="font-hand text-lg text-primary">Carregando perfil…</p>
@@ -78,7 +80,10 @@ function ProfileForm({ profile }: { profile: Profile }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageTitle>Perfil</PageTitle>
+      <div className="flex flex-col gap-1">
+        <BackLink to="/perfil">perfil</BackLink>
+        <PageTitle>Editar perfil</PageTitle>
+      </div>
 
       <div className="flex flex-col items-center gap-3">
         <Avatar name={profile.name} url={profile.avatar_url} size="lg" />

@@ -9,10 +9,48 @@ import { Stars } from '@/components/ui/Stars'
 import { StatTiles } from '@/components/ui/StatTiles'
 import { BookTitle, HandText, Label, SectionTitle } from '@/components/ui/Typography'
 import { formatDayMonth } from '@/lib/dates'
+import { formatEdition } from '@/lib/domain/clubs'
 import { memberAverage } from '@/lib/domain/ratings'
 import { formatCount } from '@/lib/domain/stats'
+import { useMyClubBooks, useMyClubs } from '@/features/clubs/api'
+import { clubBookPath } from '@/features/clubs/ClubReviewPage'
+import { clubPath } from '@/features/clubs/ClubsPage'
 import { useProfile } from '@/features/profile/api'
 import { useMyStats, useRecentReadings, type Reading } from '@/features/readings/api'
+
+/** Ingresso verde com o livro que cada clube está lendo agora, e o atalho para o ranking. */
+function ClubNow() {
+  const { data: books } = useMyClubBooks()
+  const { data: clubs } = useMyClubs()
+  const reading = books?.filter((b) => b.status === 'reading') ?? []
+  if (reading.length === 0) return null
+  const multi = (clubs?.length ?? 0) > 1
+  return (
+    <ul aria-label="Leituras dos clubes" className="flex flex-col gap-2">
+      {reading.map((cb) => {
+        const club = clubs?.find((c) => c.id === cb.club_id)
+        const label = ['no clube agora', multi && club?.name, formatEdition(cb.edition_number)].filter(Boolean).join(' · ')
+        return (
+          <li key={cb.id} className="flex flex-col gap-1">
+            <Link
+              to={clubBookPath(cb.club_id, cb.id)}
+              className="ticket flex items-center gap-3 bg-primary px-7 py-3 text-inverse no-underline hover:text-inverse"
+            >
+              <BookCover title={cb.book.title} url={cb.book.cover_url} size="xs" decorative framed={false} className="tilt-l2 border-thick border-inverse" />
+              <span className="flex min-w-0 flex-col">
+                <span className="font-mono font-bold text-2xs uppercase tracking-label text-pill">{label}</span>
+                <span className="font-display text-xl leading-none">{cb.book.title}</span>
+              </span>
+            </Link>
+            <Link to={`${clubPath(cb.club_id)}/ranking`} className="self-end font-hand text-md underline underline-offset-4">
+              ver o ranking do clube
+            </Link>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
 
 const count = (n: number | undefined) => (n === undefined ? '–' : formatCount(n))
 
@@ -73,6 +111,8 @@ export function HomePage() {
         <Icon name="plus" className="size-icon-sm" />
         Publicar nova leitura
       </ButtonLink>
+
+      <ClubNow />
 
       <section className="flex flex-col gap-2.5">
         <SectionTitle>Leituras recentes</SectionTitle>

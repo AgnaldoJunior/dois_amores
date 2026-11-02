@@ -16,6 +16,8 @@ const m = vi.hoisted(() => ({
   regenerate: vi.fn(),
   searchBooks: vi.fn(),
   suggestClubReads: vi.fn(),
+  yearReadings: [] as unknown[],
+  shelfReadings: [] as unknown[],
 }))
 
 const mutation = (fn: ReturnType<typeof vi.fn>) => ({ mutate: fn, mutateAsync: fn, isPending: false, isSuccess: false })
@@ -34,6 +36,8 @@ vi.mock('@/features/clubs/api', async (importOriginal) => ({
   useRegenerateInviteCode: () => mutation(m.regenerate),
   useChangeClubCover: () => mutation(vi.fn()),
   useLeaveClub: () => mutation(m.leave),
+  useClubYearReadings: () => ({ data: m.yearReadings, isLoading: false }),
+  useClubShelfReadings: () => ({ data: m.shelfReadings, isLoading: false }),
 }))
 vi.mock('@/lib/openlibrary/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/openlibrary/client')>()),
@@ -75,6 +79,9 @@ const ranks = (user: string, book: string, r: number) => ({
   rank_plot: r,
   rank_writing: r,
   rank_ending: r,
+  favorite_character: null,
+  favorite_quote: null,
+  comment: null,
 })
 
 function seedClub(role: 'owner' | 'member' = 'owner'): ClubDetail {
@@ -105,6 +112,8 @@ beforeEach(() => {
   Object.values(m).forEach((v) => typeof v === 'function' && 'mockReset' in v && (v as ReturnType<typeof vi.fn>).mockReset())
   m.clubs = [{ id: 'club-1', name: 'Dois Amores', cover_url: null, memberCount: 4 }]
   m.club = seedClub()
+  m.yearReadings = []
+  m.shelfReadings = []
 })
 
 describe('lista de clubes', () => {
@@ -289,5 +298,103 @@ describe('sugestão do clube', () => {
     expect(within(list).getByText('O clube gostou de suspense')).toBeInTheDocument()
     await userEvent.click(within(list).getByRole('button', { name: 'PROPOR AO CLUBE' }))
     expect(m.propose).toHaveBeenCalledWith(s)
+  })
+})
+
+describe('book review do clube', () => {
+  it('abre na ficha de quem está logada e troca de membro pelas abas', async () => {
+    const club = seedClub()
+    club.readings[0] = { ...club.readings[0]!, favorite_character: 'Nina', comment: 'Me acompanhou por dias.' }
+    m.club = club
+    renderApp('/clubes/club-1/livros/tres')
+    expect(screen.getByRole('heading', { level: 1, name: 'Três' })).toBeInTheDocument()
+    expect(screen.getByText('4,5 · média do clube')).toBeInTheDocument()
+    const tabs = screen.getByRole('tablist', { name: 'Reviews por membro' })
+    expect(within(tabs).getByRole('tab', { name: 'Leyna' })).toHaveAttribute('aria-selected', 'true')
+    const panel = screen.getByRole('tabpanel')
+    expect(within(panel).getByText('Nina')).toBeInTheDocument()
+    expect(within(panel).getByText('Me acompanhou por dias.')).toBeInTheDocument()
+
+    await userEvent.click(within(tabs).getByRole('tab', { name: 'Novata' }))
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('Novata ainda não escreveu a review de Três.')
+  })
+
+  it('sem review minha: convida a escrever e mostra as notas das amigas', () => {
+    const club = seedClub()
+    club.readings = [ranks('irla', 'book-tres', 4)]
+    m.club = club
+    renderApp('/clubes/club-1/livros/tres')
+    // Sem review própria, abre na primeira amiga que avaliou.
+    expect(screen.getByRole('tab', { name: 'Irla' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('estado pendente para quem está logada', async () => {
+    const club = seedClub()
+    club.readings = [ranks('irla', 'book-tres', 4), { ...ranks('novata', 'book-tres', 3) }]
+    m.club = club
+    renderApp('/clubes/club-1/livros/tres')
+    await userEvent.click(screen.getByRole('tab', { name: 'Leyna' }))
+    const panel = screen.getByRole('tabpanel')
+    expect(panel).toHaveTextContent('sua review de Três ainda está em branco…')
+    expect(panel).toHaveTextContent('as amigas já deram 4 e 3 estrelas')
+    expect(within(panel).getByRole('link', { name: 'escrever minha review' })).toHaveAttribute('href', '/publicar?livro=book-tres')
+  })
+})
+
+describe('ranking do clube', () => {
+  const year = new Date().getFullYear()
+  const done = (user: string, book: string, r: number) => ({ ...ranks(user, book, r), finished_on: `${year}-03-10` })
+
+  it('pódio por livros lidos, troca para média e mostra os prêmios', async () => {
+    m.yearReadings = [done(ME, 'book-tres', 5), done(ME, 'fora-1', 4), done('irla', 'book-tres', 3), done('irla', 'fora-2', 3), done('irla', 'fora-3', 3)]
+    renderApp('/clubes/club-1/ranking')
+    const podium = screen.getByRole('list', { name: 'Pódio' })
+    // Ordem visual 2º, 1º, 3º.
+    expect(within(podium).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      expect.stringContaining('Leyna2'),
+      expect.stringContaining('Irla3'),
+      expect.stringContaining('Novata0'),
+    ])
+    await userEvent.click(screen.getByRole('button', { name: 'média de estrelas' }))
+    expect(screen.getByRole('button', { name: 'média de estrelas' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(podium).getAllByRole('listitem')[1]).toHaveTextContent('Leyna4,5★1º lugar')
+
+    const awards = screen.getByRole('region', { name: 'Prêmios do clube' })
+    expect(awards).toHaveTextContent('Irla: 2 livros fora do clube')
+    expect(awards).toHaveTextContent('Leyna: 1× 5★ no clube')
+    expect(awards).toHaveTextContent('Irla: menor média: 3,0★')
+  })
+})
+
+describe('página do clube: extras', () => {
+  it('os mais amados e os votos de cada membro', () => {
+    renderApp('/clubes/club-1')
+    const loved = screen.getByRole('region', { name: 'Os mais amados' })
+    expect(within(loved).getByRole('link', { name: /Três/ })).toHaveAttribute('href', '/clubes/club-1/livros/tres')
+    const votes = within(screen.getByRole('region', { name: 'Aguardando aprovação' })).getByRole('list', { name: 'Votos' })
+    expect(within(votes).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['LLeyna…ainda não votou', 'IIrla✓aprovou'])
+    expect(screen.getByRole('link', { name: 'RANKING' })).toHaveAttribute('href', '/clubes/club-1/ranking')
+  })
+
+  it('o livro em leitura leva às reviews do clube', () => {
+    renderApp('/clubes/club-1')
+    expect(screen.getByRole('link', { name: 'reviews do clube' })).toHaveAttribute('href', '/clubes/club-1/livros/amanhecer')
+  })
+})
+
+describe('favoritos das estantes', () => {
+  it('livros fora do clube com a média dos membros, para propor', async () => {
+    m.suggestClubReads.mockResolvedValue([])
+    m.shelfReadings = [
+      { ...ranks(ME, 'duna', 5), book: { id: 'duna', title: 'Duna', author: 'Frank Herbert', cover_url: null } },
+      { ...ranks('irla', 'duna', 4), book: { id: 'duna', title: 'Duna', author: 'Frank Herbert', cover_url: null } },
+      { ...ranks('irla', 'book-tres', 5), book: { id: 'book-tres', title: 'Três', author: 'V', cover_url: null } },
+    ]
+    renderApp('/clubes/club-1/sugestoes')
+    const list = screen.getByRole('list', { name: 'Favoritos das estantes' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1) // Três já é do clube
+    expect(within(list).getByText('4,5 · média de 2 membros')).toBeInTheDocument()
+    await userEvent.click(within(list).getByRole('button', { name: 'propor ao clube' }))
+    expect(m.propose).toHaveBeenCalledWith({ bookId: 'duna' })
   })
 })

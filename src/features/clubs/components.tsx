@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
+import { Avatar } from '@/components/ui/Avatar'
 import { BookCover } from '@/components/ui/BookCover'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -11,10 +12,10 @@ import { proposalState } from '@/lib/domain/clubs'
 import { useVote, useWithdrawProposal, type ClubBook, type ClubMember } from './api'
 
 /** Livro do clube de pé na prateleira: capa, tábua e, embaixo, nota e edição. */
-export function ClubBookTile({ clubBook, average, footer }: { clubBook: ClubBook; average?: number | null; footer?: ReactNode }) {
+export function ClubBookTile({ clubBook, to, average, footer }: { clubBook: { book: { id: string; title: string; cover_url: string | null } }; to?: string; average?: number | null; footer?: ReactNode }) {
   return (
     <li className="flex shrink-0 flex-col justify-end">
-      <Link to={`/livros/${clubBook.book.id}`} className="relative z-1 block px-1" aria-label={clubBook.book.title}>
+      <Link to={to ?? `/livros/${clubBook.book.id}`} className="relative z-1 block px-1" aria-label={clubBook.book.title}>
         <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="feed" decorative framed={false} className="shadow-spine" />
       </Link>
       <span aria-hidden="true" className="plank -mt-0.5 rounded-none" />
@@ -67,6 +68,29 @@ export function ProposalCard({ clubBook, members }: { clubBook: ClubBook; member
           {proposer && <HandText className="text-accentStrong">Proposto por {proposer}</HandText>}
         </div>
       </div>
+      <ul aria-label="Votos" className="flex flex-wrap gap-1.5">
+        {members
+          .filter((m) => state.eligible.includes(m.user_id))
+          .map((m) => {
+            const v = clubBook.votes.find((x) => x.user_id === m.user_id)
+            const mark = v == null ? '…' : v.approved ? '✓' : '✗'
+            const label = v == null ? 'ainda não votou' : v.approved ? 'aprovou' : 'recusou'
+            return (
+              <li
+                key={m.user_id}
+                className={
+                  'flex items-center gap-1 rounded-full border border-primary py-0.5 pr-2 pl-0.5 font-hand text-sm ' +
+                  (v?.approved ? 'bg-primary text-inverse' : 'bg-page')
+                }
+              >
+                <Avatar name={m.profile.name} url={m.profile.avatar_url} size="xs" border="thin" />
+                <span>{m.profile.name.split(/\s+/)[0]}</span>
+                <span aria-hidden="true" className="font-mono font-bold">{mark}</span>
+                <span className="sr-only">{label}</span>
+              </li>
+            )
+          })}
+      </ul>
       <Label className="text-2xs">
         {state.approved} de {state.total} {state.total === 1 ? 'membro aprovou' : 'membros aprovaram'}
       </Label>

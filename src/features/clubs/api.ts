@@ -42,8 +42,15 @@ export type ClubDetail = {
   created_by: string | null
   members: ClubMember[]
   books: ClubBook[]
-  /** Leituras dos membros para os livros do clube (para as médias). */
-  readings: ReadingLike[]
+  /** Leituras dos membros para os livros do clube (médias e reviews). */
+  readings: ClubReading[]
+}
+
+/** Leitura de um membro para um livro do clube, com os campos da review. */
+export type ClubReading = ReadingLike & {
+  favorite_character: string | null
+  favorite_quote: string | null
+  comment: string | null
 }
 
 export const clubKeys = {
@@ -51,6 +58,9 @@ export const clubKeys = {
   list: (userId: string) => ['clubs', 'list', userId] as const,
   detail: (clubId: string) => ['clubs', 'detail', clubId] as const,
   member: (userId: string) => ['clubs', 'member', userId] as const,
+  myBooks: (userId: string) => ['clubs', 'my-books', userId] as const,
+  year: (clubId: string, year: number) => ['clubs', 'year', clubId, year] as const,
+  shelves: (clubId: string) => ['clubs', 'shelves', clubId] as const,
 }
 
 const RANKS = 'rank_characters, rank_plot, rank_writing, rank_ending'
@@ -96,11 +106,11 @@ export function useClub(clubId: string) {
 
       const bookIds = club.books.map((b) => b.book.id)
       const memberIds = club.members.map((m) => m.user_id)
-      let readings: ReadingLike[] = []
+      let readings: ClubReading[] = []
       if (bookIds.length && memberIds.length) {
         const res = await supabase
           .from('user_books')
-          .select(`user_id, book_id, started_on, finished_on, ${RANKS}`)
+          .select(`user_id, book_id, started_on, finished_on, ${RANKS}, favorite_character, favorite_quote, comment`)
           .in('book_id', bookIds)
           .in('user_id', memberIds)
         if (res.error) throw res.error
@@ -135,6 +145,72 @@ export function useMemberProfile(userId: string) {
         profile: profile.data,
         readings: readings.data.map((r) => ({ ...r, pages: r.book?.pages ?? null })) as MemberProfile['readings'],
       }
+    },
+  })
+}
+
+export type MyClubBook = {
+  id: string
+  club_id: string
+  status: ClubBookStatus
+  edition_number: number | null
+  started_on: string | null
+  proposed_by: string | null
+  book: { id: string; title: string; author: string | null; cover_url: string | null }
+}
+
+/** Livros de todos os clubes de que a pessoa participa (RLS filtra os clubes). */
+export function useMyClubBooks() {
+  const user = useCurrentUser()
+  return useQuery({
+    queryKey: clubKeys.myBooks(user.id),
+    queryFn: async (): Promise<MyClubBook[]> => {
+      const { data, error } = await supabase
+        .from('club_books')
+        .select('id, club_id, status, edition_number, started_on, proposed_by, book:books(id, title, author, cover_url)')
+        .in('status', ['reading', 'finished'])
+        .order('edition_number', { ascending: false, nullsFirst: true })
+      if (error) throw error
+      return data as unknown as MyClubBook[]
+    },
+  })
+}
+
+/** Leituras terminadas no ano por todos os membros do clube (ranking e prêmios). */
+export function useClubYearReadings(clubId: string, memberIds: string[], year: number) {
+  return useQuery({
+    queryKey: clubKeys.year(clubId, year),
+    enabled: memberIds.length > 0,
+    queryFn: async (): Promise<ReadingLike[]> => {
+      const { data, error } = await supabase
+        .from('user_books')
+        .select(`user_id, book_id, started_on, finished_on, ${RANKS}`)
+        .in('user_id', memberIds)
+        .gte('finished_on', `${year}-01-01`)
+        .lte('finished_on', `${year}-12-31`)
+      if (error) throw error
+      return data
+    },
+  })
+}
+
+export type ShelfReading = ReadingLike & {
+  book: { id: string; title: string; author: string | null; cover_url: string | null }
+}
+
+/** Livros terminados por todos os membros (os favoritos das estantes, fora do clube). */
+export function useClubShelfReadings(clubId: string, memberIds: string[]) {
+  return useQuery({
+    queryKey: clubKeys.shelves(clubId),
+    enabled: memberIds.length > 0,
+    queryFn: async (): Promise<ShelfReading[]> => {
+      const { data, error } = await supabase
+        .from('user_books')
+        .select(`user_id, book_id, started_on, finished_on, ${RANKS}, book:books(id, title, author, cover_url)`)
+        .in('user_id', memberIds)
+        .not('finished_on', 'is', null)
+      if (error) throw error
+      return data as unknown as ShelfReading[]
     },
   })
 }

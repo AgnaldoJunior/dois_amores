@@ -30,6 +30,24 @@ vi.mock('@/features/readings/api', () => ({
   }),
 }))
 
+vi.mock('@/features/clubs/api', () => ({
+  useJoinClub: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useMyClubs: () => ({ data: [{ id: 'c1', name: 'Dois Amores', cover_url: null, memberCount: 4 }] }),
+  useMyClubBooks: () => ({
+    data: [
+      {
+        id: 'cb8',
+        club_id: 'c1',
+        status: 'reading',
+        edition_number: 8,
+        started_on: '2026-10-01',
+        proposed_by: 'irla',
+        book: { id: 'b8', title: '10 minutos e 38 segundos neste mundo estranho', author: 'Elif Shafak', cover_url: null },
+      },
+    ],
+  }),
+}))
+
 describe('navegação principal', () => {
   it('mostra as quatro abas', () => {
     renderApp('/')
@@ -59,6 +77,14 @@ describe('navegação principal', () => {
     const link = screen.getByRole('link', { name: /^Três/ })
     expect(link).toHaveAttribute('href', '/livros/b1')
     expect(screen.getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
+  })
+
+  it('a tela inicial mostra o livro que o clube está lendo e o atalho para o ranking', () => {
+    renderApp('/')
+    const ticket = screen.getByRole('link', { name: /no clube agora · No\.08/ })
+    expect(ticket).toHaveAttribute('href', '/clubes/c1/livros/cb8')
+    expect(ticket).toHaveTextContent('10 minutos e 38 segundos neste mundo estranho')
+    expect(screen.getByRole('link', { name: 'ver o ranking do clube' })).toHaveAttribute('href', '/clubes/c1/ranking')
   })
 
   it('rota desconhecida mostra página não encontrada', () => {

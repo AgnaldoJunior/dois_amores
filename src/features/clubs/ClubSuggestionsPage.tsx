@@ -1,13 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
+import { BackLink } from '@/components/ui/BackLink'
 import { BookCover } from '@/components/ui/BookCover'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { FormMessage } from '@/components/ui/FormMessage'
-import { HandText, PageTitle } from '@/components/ui/Typography'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Stars } from '@/components/ui/Stars'
+import { HandText, Label, PageTitle, SectionTitle } from '@/components/ui/Typography'
 import { AI_ERROR_MESSAGES, AiError, suggestClubReads, type BookSuggestion } from '@/lib/ai/client'
-import { useProposeBook } from './api'
+import { shelfFavorites, type ShelfFavorite } from '@/lib/domain/ranking'
+import { formatAverage } from '@/lib/domain/ratings'
+import { useClub, useClubShelfReadings, useProposeBook, type ShelfReading } from './api'
 import { clubPath } from './ClubsPage'
 import { proposeErrorMessage } from './ProposePage'
 
@@ -33,8 +38,15 @@ export function ClubSuggestionsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageTitle>Sugestão do clube</PageTitle>
-      <p className="font-hand text-lg text-accentStrong">
+      <div className="flex flex-col gap-1">
+        <BackLink to={clubPath(clubId)}>clube</BackLink>
+        <PageTitle>Sugestão do clube</PageTitle>
+      </div>
+
+      <ShelfFavorites clubId={clubId} />
+
+      <SectionTitle>Ideias da IA</SectionTitle>
+      <p className="-mt-2 font-hand text-md text-accentStrong">
         sugerido por IA a partir dos livros do clube e das notas de cada membro; cada livro foi conferido na Open Library
       </p>
 
@@ -59,10 +71,72 @@ export function ClubSuggestionsPage() {
           Gerar outras sugestões
         </Button>
       )}
-      <Link to={clubPath(clubId)} className="self-center font-hand text-md text-primary underline underline-offset-4">
-        Voltar para o clube
-      </Link>
     </div>
+  )
+}
+
+/** "Os favoritos das estantes de vocês, fora do clube" — sem IA: médias das notas dos membros. */
+function ShelfFavorites({ clubId }: { clubId: string }) {
+  const { data: club } = useClub(clubId)
+  const memberIds = club?.members.map((m) => m.user_id) ?? []
+  const { data: readings, isLoading } = useClubShelfReadings(clubId, memberIds)
+  const favorites = shelfFavorites(readings ?? [], club?.books.map((b) => b.book.id) ?? [])
+  if (isLoading || !club) return null
+  return (
+    <section className="flex flex-col gap-2.5" aria-labelledby="shelf-favorites">
+      <SectionTitle>
+        <span id="shelf-favorites">Das estantes</span>
+      </SectionTitle>
+      <p className="-mt-1.5 text-center font-hand text-md">os favoritos das estantes de vocês, fora do clube</p>
+      {favorites.length === 0 ? (
+        <EmptyState>Quando alguém do clube terminar um livro por conta própria, ele aparece aqui.</EmptyState>
+      ) : (
+        <ul className="flex flex-col gap-2" aria-label="Favoritos das estantes">
+          {favorites.map((f) => (
+            <li key={f.book.id}>
+              <ShelfFavoriteCard clubId={clubId} favorite={f} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function ShelfFavoriteCard({ clubId, favorite }: { clubId: string; favorite: ShelfFavorite<ShelfReading['book']> }) {
+  const propose = useProposeBook(clubId)
+  const [error, setError] = useState('')
+  const { book } = favorite
+  async function onPropose() {
+    setError('')
+    try {
+      await propose.mutateAsync({ bookId: book.id })
+    } catch (err) {
+      setError(proposeErrorMessage(err))
+    }
+  }
+  return (
+    <article className="flex gap-3 rounded-card border border-primary bg-card p-2.5">
+      <BookCover title={book.title} url={book.cover_url} size="feed" decorative />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <h3 className="font-type font-normal text-sm leading-tight">{book.title}</h3>
+        {book.author && <p className="font-hand text-md leading-none">{book.author}</p>}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Stars value={favorite.average} size="sm" />
+          <Label className="text-2xs">
+            {formatAverage(favorite.average)} · média de {favorite.raters} {favorite.raters === 1 ? 'membro' : 'membros'}
+          </Label>
+        </div>
+        {propose.isSuccess ? (
+          <p role="status" className="font-hand text-md">✓ proposto ao clube</p>
+        ) : (
+          <Button variant="secondary" fullWidth={false} onClick={onPropose} loading={propose.isPending} className="self-start min-h-button-sm-h text-2xs">
+            propor ao clube
+          </Button>
+        )}
+        {error && <FormMessage tone="error">{error}</FormMessage>}
+      </div>
+    </article>
   )
 }
 

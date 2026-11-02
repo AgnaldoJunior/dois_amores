@@ -35,7 +35,7 @@ const club = {
     { id: 'cb1', status: 'finished', started_on: '2026-09-01', finished_on: '2026-09-29', edition_number: 5, created_at: '2026-08-28T00:00:00Z', proposed_by: null, book, votes: [] },
     { id: 'cb2', status: 'pending', started_on: null, finished_on: null, edition_number: null, created_at: '2026-10-19T00:00:00Z', proposed_by: 'irla', book: { ...book, id: 'b2', title: 'Torto arado' }, votes: [{ user_id: 'irla', approved: true }] },
   ],
-  readings: [],
+  readings: [{ user_id: 'user-1', book_id: 'b1', started_on: '2026-09-01', finished_on: '2026-09-27', rank_characters: 5, rank_plot: 4, rank_writing: 5, rank_ending: 4, favorite_character: 'Nina', favorite_quote: null, comment: 'Lindo.' }],
 }
 const mutation = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false, isSuccess: false }
 
@@ -86,6 +86,9 @@ vi.mock('@/features/clubs/api', () => ({
   useLeaveClub: () => mutation,
   useProposeBook: () => mutation,
   useMemberProfile: () => ({ data: { profile: { id: 'irla', name: 'Irla', avatar_url: null, bio: null }, readings: [] }, isLoading: false }),
+  useMyClubBooks: () => ({ data: [{ id: 'cb1', club_id: 'c1', status: 'finished', edition_number: 5, started_on: '2026-09-01', proposed_by: 'user-1', book }] }),
+  useClubYearReadings: () => ({ data: club.readings, isLoading: false }),
+  useClubShelfReadings: () => ({ data: [], isLoading: false }),
 }))
 
 async function violations(path: string, session: 'in' | 'out' = 'in') {
@@ -122,6 +125,9 @@ describe('acessibilidade (axe-core)', () => {
     ['publicar leitura', '/publicar'],
     ['editar leitura', '/leituras/r1/editar'],
     ['perfil', '/perfil'],
+    ['editar perfil', '/perfil/editar'],
+    ['ranking do clube', '/clubes/c1/ranking'],
+    ['book review do clube', '/clubes/c1/livros/cb1'],
     ['clubes', '/clubes'],
     ['criar clube', '/clubes/novo'],
     ['página do clube', '/clubes/c1'],

@@ -28,3 +28,12 @@ export function todayIso(now = new Date()): string {
   const d = String(now.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
 }
+
+const MONTHS_LONG = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+
+/** "outubro 2026" — mês da edição nos carimbos do clube. */
+export function formatMonthYear(iso: string | null | undefined): string {
+  const d = iso ? parseIsoDate(iso) : null
+  if (!d) return ''
+  return `${MONTHS_LONG[d.month - 1]} ${d.year}`
+}

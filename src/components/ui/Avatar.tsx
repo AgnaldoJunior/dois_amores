@@ -15,12 +15,14 @@ type AvatarProps = {
   url?: string | null
   size?: AvatarSize
   className?: string
+  /** Contorno verde: grosso (padrão) ou fino, para avatares pequenos dentro de botões. */
+  border?: 'thick' | 'thin'
 }
 
 /** Foto do perfil num círculo com contorno verde ou, sem foto, a inicial sobre o rosa. */
-export function Avatar({ name, url, size = 'md', className = '' }: AvatarProps) {
+export function Avatar({ name, url, size = 'md', className = '', border = 'thick' }: AvatarProps) {
   const initial = name.trim().charAt(0).toUpperCase() || '?'
-  const base = `${sizeClass[size]} shrink-0 rounded-full border-thick border-primary overflow-hidden`
+  const base = `${sizeClass[size]} shrink-0 rounded-full ${border === 'thick' ? 'border-thick' : 'border-thin'} border-primary overflow-hidden`
   return url ? (
     <img src={url} alt="" referrerPolicy="no-referrer" className={`${base} object-cover bg-page ${className}`} />
   ) : (

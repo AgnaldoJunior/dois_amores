@@ -4,17 +4,20 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { SignUpPage } from '@/features/auth/SignUpPage'
 import { ClubPage } from '@/features/clubs/ClubPage'
+import { ClubReviewPage } from '@/features/clubs/ClubReviewPage'
 import { ClubsPage } from '@/features/clubs/ClubsPage'
 import { ClubSuggestionsPage } from '@/features/clubs/ClubSuggestionsPage'
 import { CreateClubPage } from '@/features/clubs/CreateClubPage'
 import { MemberPage } from '@/features/clubs/MemberPage'
 import { ProposePage } from '@/features/clubs/ProposePage'
+import { RankingPage } from '@/features/clubs/RankingPage'
 import { FeedPage } from '@/features/feed/FeedPage'
 import { HomePage } from '@/features/home/HomePage'
 import { PrivacyPage } from '@/features/legal/PrivacyPage'
 import { MagazinePage } from '@/features/magazine/MagazinePage'
 import { PlaceholderPage } from '@/features/placeholder/PlaceholderPage'
-import { ProfilePage } from '@/features/profile/ProfilePage'
+import { ProfileOverviewPage } from '@/features/profile/ProfileOverviewPage'
+import { ProfileEditPage } from '@/features/profile/ProfilePage'
 import { ReadingFormPage } from '@/features/readings/ReadingFormPage'
 import { BookPage } from '@/features/shelf/BookPage'
 import { ShelfPage } from '@/features/shelf/ShelfPage'
@@ -46,9 +49,12 @@ export const routes: RouteObject[] = [
           { path: 'clubes/:clubId/sugestoes', element: <ClubSuggestionsPage /> },
           { path: 'clubes/:clubId/membros/:userId', element: <MemberPage /> },
           { path: 'clubes/:clubId/revista', element: <MagazinePage /> },
+          { path: 'clubes/:clubId/ranking', element: <RankingPage /> },
+          { path: 'clubes/:clubId/livros/:clubBookId', element: <ClubReviewPage /> },
           { path: 'publicar', element: <ReadingFormPage /> },
           { path: 'leituras/:id/editar', element: <ReadingFormPage /> },
-          { path: 'perfil', element: <ProfilePage /> },
+          { path: 'perfil', element: <ProfileOverviewPage /> },
+          { path: 'perfil/editar', element: <ProfileEditPage /> },
           {
             path: '*',
             element: <PlaceholderPage title="Página não encontrada" message="Esta página se perdeu na estante." />,

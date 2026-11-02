@@ -57,6 +57,7 @@ export function proposalState(clubBook: ClubBookLike, members: MemberLike[], use
   const mine = clubBook.votes.find((v) => v.user_id === userId)
   return {
     ...approvalProgress({ eligibleMemberIds: eligible, votes }),
+    eligible,
     canVote: eligible.includes(userId),
     myVote: mine ? mine.approved : null,
   }

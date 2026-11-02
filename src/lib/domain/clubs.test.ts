@@ -80,7 +80,7 @@ describe('votação', () => {
   })
 
   it('mostra quantos aprovaram entre os que podem votar', () => {
-    expect(proposalState(proposal, members, 'irla')).toEqual({ approved: 1, total: 2, canVote: true, myVote: null })
+    expect(proposalState(proposal, members, 'irla')).toEqual({ approved: 1, total: 2, eligible: ['leyna', 'irla'], canVote: true, myVote: null })
   })
 
   it('quem entrou depois da proposta não vota', () => {

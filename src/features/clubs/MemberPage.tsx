@@ -5,12 +5,12 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { Stars } from '@/components/ui/Stars'
 import { StatTiles } from '@/components/ui/StatTiles'
-import { HandText, SectionTitle } from '@/components/ui/Typography'
+import { HandText, Label, SectionTitle } from '@/components/ui/Typography'
 import { useBackgroundEnrichment } from '@/lib/books/useBackgroundEnrichment'
-import { memberStats } from '@/lib/domain/clubs'
+import { formatEdition, memberStats } from '@/lib/domain/clubs'
 import { formatAverage, memberAverage } from '@/lib/domain/ratings'
 import { formatCount } from '@/lib/domain/stats'
-import { useMemberProfile } from './api'
+import { useClub, useMemberProfile } from './api'
 import { clubPath } from './ClubsPage'
 import { ShelfGrid, ShelfTile } from '@/features/shelf/ShelfTile'
 
@@ -18,6 +18,7 @@ import { ShelfGrid, ShelfTile } from '@/features/shelf/ShelfTile'
 export function MemberPage() {
   const { clubId = '', userId = '' } = useParams()
   const { data, isLoading, isError } = useMemberProfile(userId)
+  const { data: club } = useClub(clubId)
   useBackgroundEnrichment(data?.readings.map((r) => r.book))
 
   if (isLoading) return <p className="font-hand text-lg text-primary">Carregando…</p>
@@ -25,6 +26,10 @@ export function MemberPage() {
 
   const stats = memberStats(data.readings)
   const finished = data.readings.filter((r) => r.finished_on)
+  const chosen = (club?.books ?? [])
+    .filter((b) => b.proposed_by === userId && b.edition_number != null)
+    .map((b) => b.edition_number!)
+    .sort((a, b) => a - b)
 
   return (
     <div className="flex flex-col gap-4">
@@ -34,6 +39,12 @@ export function MemberPage() {
         <div className="flex min-w-0 flex-col">
           <h1 className="font-script font-normal text-5xl leading-none text-title">{data.profile.name}</h1>
           {data.profile.bio && <HandText>{data.profile.bio}</HandText>}
+          {chosen.length > 0 && (
+            <Label className="text-2xs">
+              escolheu {formatEdition(chosen[0])}
+              {chosen.length > 1 && `, ${chosen.slice(1).map((n) => String(n).padStart(2, '0')).join(', ')}`}
+            </Label>
+          )}
         </div>
       </header>
 

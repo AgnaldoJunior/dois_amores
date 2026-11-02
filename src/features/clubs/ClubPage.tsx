@@ -2,24 +2,31 @@ import { useState, type ChangeEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button, ButtonLink, buttonClass } from '@/components/ui/Button'
+import { BookCover } from '@/components/ui/BookCover'
 import { Card } from '@/components/ui/Card'
 import { Icon } from '@/components/ui/Icon'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormMessage } from '@/components/ui/FormMessage'
+import { Stars } from '@/components/ui/Stars'
 import { Label, SectionTitle } from '@/components/ui/Typography'
 import { AVATAR_ACCEPT, validateAvatarFile } from '@/features/profile/imageResize'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { useBackgroundEnrichment } from '@/lib/books/useBackgroundEnrichment'
-import { formatDayMonth } from '@/lib/dates'
+import { formatDayMonth, formatMonthYear } from '@/lib/dates'
 import { clubBookAverage, formatEdition, groupClubBooks } from '@/lib/domain/clubs'
+import { mostLoved } from '@/lib/domain/ranking'
+import { formatAverage } from '@/lib/domain/ratings'
 import {
   useChangeClubCover,
   useClub,
   useFinishClubBook,
   useLeaveClub,
   useRegenerateInviteCode,
+  type ClubBook,
   type ClubDetail,
+  type ClubMember,
 } from './api'
+import { clubBookPath } from './ClubReviewPage'
 import { clubPath } from './ClubsPage'
 import { ClubBookGrid, ClubBookTile, ProposalCard } from './components'
 
@@ -63,11 +70,13 @@ export function ClubPage() {
         {groups.reading.length === 0 ? (
           <EmptyState>Nenhum livro em leitura. Proponha o próximo!</EmptyState>
         ) : (
-          <ClubBookGrid label="Livros em leitura no clube">
+          <ul aria-label="Livros em leitura no clube" className="flex flex-col gap-3">
             {groups.reading.map((cb) => (
-              <ClubBookTile key={cb.id} clubBook={cb} footer={<FinishButton clubBookId={cb.id} startedOn={cb.started_on} />} />
+              <li key={cb.id}>
+                <CurrentBookCard clubId={club.id} clubBook={cb} members={club.members} />
+              </li>
             ))}
-          </ClubBookGrid>
+          </ul>
         )}
       </section>
 
@@ -83,6 +92,7 @@ export function ClubPage() {
               <ClubBookTile
                 key={cb.id}
                 clubBook={cb}
+                to={clubBookPath(club.id, cb.id)}
                 average={clubBookAverage(cb.book.id, club.readings, memberIds)}
                 footer={<Label className="text-2xs">{formatEdition(cb.edition_number)}</Label>}
               />
@@ -90,6 +100,8 @@ export function ClubPage() {
           </ClubBookGrid>
         )}
       </section>
+
+      <MostLoved clubId={club.id} books={groups.finished} readings={club.readings} memberIds={memberIds} />
 
       {groups.pending.length > 0 && (
         <section className="flex flex-col gap-3" aria-labelledby="club-pending">
@@ -115,7 +127,11 @@ export function ClubPage() {
           <Icon name="magazine" className="size-icon-sm" />
           EXPORTAR REVISTA
         </ButtonLink>
-        <ButtonLink to={`${clubPath(club.id)}/sugestoes`} variant="outline" className="col-span-2">
+        <ButtonLink to={`${clubPath(club.id)}/ranking`} variant="outline">
+          <Icon name="trophy" className="size-icon-sm" />
+          RANKING
+        </ButtonLink>
+        <ButtonLink to={`${clubPath(club.id)}/sugestoes`} variant="outline">
           <Icon name="sparkle" className="size-icon-sm" />
           SUGESTÃO DO CLUBE
         </ButtonLink>
@@ -179,12 +195,64 @@ function ClubHeader({ club }: { club: ClubDetail }) {
   )
 }
 
+/** Livro em leitura: selo, mês e edição, quem escolheu, reviews e concluir. */
+function CurrentBookCard({ clubId, clubBook, members }: { clubId: string; clubBook: ClubBook; members: ClubMember[] }) {
+  const chooser = members.find((m) => m.user_id === clubBook.proposed_by)?.profile.name.split(/\s+/)[0]
+  const stamp = [formatMonthYear(clubBook.started_on), formatEdition(clubBook.edition_number), chooser && `escolha de ${chooser}`]
+    .filter(Boolean)
+    .join(' · ')
+  return (
+    <article className="flex gap-3.5 rounded-card border border-primary bg-card p-3">
+      <Link to={clubBookPath(clubId, clubBook.id)} aria-label={clubBook.book.title} className="shrink-0">
+        <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="stamp" stamp decorative />
+      </Link>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        {stamp && <Label className="text-2xs text-accentStrong">{stamp}</Label>}
+        <h3 className="self-start rounded-pill bg-pill px-2.5 py-0.5 font-type font-normal text-sm leading-tight">{clubBook.book.title}</h3>
+        {clubBook.book.author && <p className="font-hand text-md leading-none">{clubBook.book.author}</p>}
+        <ButtonLink to={clubBookPath(clubId, clubBook.id)} fullWidth={false} className="mt-auto self-start min-h-button-sm-h text-2xs">
+          reviews do clube
+        </ButtonLink>
+        <FinishButton clubBookId={clubBook.id} startedOn={clubBook.started_on} />
+      </div>
+    </article>
+  )
+}
+
+/** Top 3 do clube pela média das médias. */
+function MostLoved({ clubId, books, readings, memberIds }: { clubId: string; books: ClubBook[]; readings: ClubDetail['readings']; memberIds: string[] }) {
+  const top = mostLoved(books, readings, memberIds)
+  if (top.length === 0) return null
+  return (
+    <section className="flex flex-col gap-2.5" aria-labelledby="club-loved">
+      <SectionTitle>
+        <span id="club-loved">Os mais amados</span>
+      </SectionTitle>
+      <ol className="flex flex-col gap-2">
+        {top.map((cb, i) => (
+          <li key={cb.id}>
+            <Link to={clubBookPath(clubId, cb.id)} className="flex items-center gap-3 rounded-card border border-primary bg-card p-2 pr-3 no-underline">
+              <span className="w-6 text-center font-display text-4xl leading-none text-accentStrong">{i + 1}</span>
+              <BookCover title={cb.book.title} url={cb.book.cover_url} size="xs" decorative />
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate font-type text-sm">{cb.book.title}</span>
+                <Stars value={cb.average} size="sm" />
+              </span>
+              <span className="font-display text-2xl">{formatAverage(cb.average)}</span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
 function FinishButton({ clubBookId, startedOn }: { clubBookId: string; startedOn: string | null }) {
   const finish = useFinishClubBook()
   const [confirm, setConfirm] = useState(false)
   return (
     <div className="flex flex-col gap-1">
-      {startedOn && <Label className="text-2xs">desde {formatDayMonth(startedOn)}</Label>}
+      {startedOn && <Label className="text-2xs">lendo desde {formatDayMonth(startedOn)}</Label>}
       {confirm ? (
         <span className="flex gap-2">
           <button type="button" className="font-hand text-md text-primary underline" onClick={() => finish.mutate(clubBookId)}>
