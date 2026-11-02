@@ -15,18 +15,21 @@ type RatingInputProps = {
 export function RatingInput({ label, value, onChange, max = 5 }: RatingInputProps) {
   const name = useId()
   return (
-    <fieldset className="flex items-center gap-3">
+    <fieldset className="flex items-center justify-between gap-2">
       <legend className="sr-only">{label}</legend>
-      <span aria-hidden="true" className="flex-1 font-mono text-xs uppercase tracking-label text-primary">
+      <span
+        aria-hidden="true"
+        className="w-rating-label-w shrink-0 rounded-xs bg-pill px-2 py-1 text-center font-mono font-bold text-2xs uppercase tracking-label text-primary"
+      >
         {label}
       </span>
-      <span className="flex flex-1 items-center gap-1.5">
+      <span className="flex items-center">
         {Array.from({ length: max }, (_, i) => {
           const n = i + 1
           return (
             <label
               key={n}
-              className="cursor-pointer rounded-sm has-[:focus-visible]:outline has-[:focus-visible]:outline-primary"
+              className="flex h-11 w-10 cursor-pointer items-center justify-center rounded-sm has-[:focus-visible]:outline has-[:focus-visible]:outline-primary"
             >
               <input
                 type="radio"

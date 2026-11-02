@@ -1,14 +1,13 @@
 import { useId } from 'react'
 
-/** Contorno da estrela do Figma (Design System · Star), viewBox 15.2169 × 14.4721. */
-const STAR_PATH =
-  'M7.60845 0L9.72448 5.08754L15.2169 5.52786L11.0323 9.11246L12.3107 14.4721L7.60845 11.6L2.90617 14.4721L4.18465 9.11246L0 5.52786L5.49243 5.08754L7.60845 0Z'
-const VIEW_W = 15.2169
-const VIEW_H = 14.4721
+/** Estrela do design (viewBox 24 × 24), sempre com contorno verde. */
+const STAR_PATH = 'M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.5L12 17.3 6.1 20.5l1.3-6.5L2.5 9.4l6.6-.8z'
+const VIEW = 24
 
 export type StarFill = 'full' | 'half' | 'empty'
 
 const sizeClass = {
+  xs: 'size-star-xs',
   sm: 'size-star-sm',
   md: 'size-star-md',
   post: 'size-star-post',
@@ -29,43 +28,32 @@ export function formatRating(value: number) {
   return value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
 }
 
-export function StarIcon({ fill, className }: { fill: StarFill; className: string }) {
-  const id = useId()
-  const maskId = `${id}-inner-stroke`
-  const clipId = `${id}-half`
+export type StarTone = 'primary' | 'inverse'
+
+const toneClass = {
+  primary: { fill: 'fill-ratingFilled', stroke: 'stroke-ratingEmpty' },
+  inverse: { fill: 'fill-inverse', stroke: 'stroke-inverse' },
+} as const
+
+export function StarIcon({ fill, className, tone = 'primary' }: { fill: StarFill; className: string; tone?: StarTone }) {
+  const t = toneClass[tone]
+  const clipId = `${useId()}-half`
   return (
-    <svg
-      viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-      className={className}
-      aria-hidden="true"
-      focusable="false"
-      data-fill={fill}
-    >
-      <defs>
-        {/* Contorno interno, como no Figma: stroke duplo recortado pela própria forma. */}
-        <mask id={maskId}>
-          <path d={STAR_PATH} className="fill-inverse" />
-        </mask>
-        <clipPath id={clipId}>
-          <rect x="0" y="0" width={VIEW_W / 2} height={VIEW_H} />
-        </clipPath>
-      </defs>
-      {fill === 'full' ? (
-        <path d={STAR_PATH} className="fill-ratingFilled" />
-      ) : (
-        <>
-          <path d={STAR_PATH} className="fill-page" />
-          {fill === 'half' && (
-            <path d={STAR_PATH} className="fill-ratingFilled" clipPath={`url(#${clipId})`} />
-          )}
-          <path
-            d={STAR_PATH}
-            className="fill-transparent stroke-ratingEmpty"
-            strokeWidth={2.4}
-            mask={`url(#${maskId})`}
-          />
-        </>
+    <svg viewBox={`0 0 ${VIEW} ${VIEW}`} className={className} aria-hidden="true" focusable="false" data-fill={fill}>
+      {fill === 'half' && (
+        <defs>
+          <clipPath id={clipId}>
+            <rect x="0" y="0" width={VIEW / 2} height={VIEW} />
+          </clipPath>
+        </defs>
       )}
+      {fill === 'half' && <path d={STAR_PATH} className={t.fill} clipPath={`url(#${clipId})`} />}
+      <path
+        d={STAR_PATH}
+        className={`${fill === 'full' ? t.fill : 'fill-transparent'} ${t.stroke}`}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -77,10 +65,12 @@ type StarsProps = {
   /** Texto acessível; por padrão "4,5 de 5 estrelas" ou "Sem nota". */
   label?: string
   className?: string
+  /** `inverse` para estrelas creme sobre fundo verde. */
+  tone?: StarTone
 }
 
-/** Exibição de nota (somente leitura): estrelas cheias verdes, vazias com contorno rosa, suporte a meia estrela. */
-export function Stars({ value, size = 'md', max = 5, label, className = '' }: StarsProps) {
+/** Exibição de nota (somente leitura): estrelas verdes cheias, vazias só com contorno, suporte a meia estrela. */
+export function Stars({ value, size = 'md', max = 5, label, className = '', tone = 'primary' }: StarsProps) {
   const fills = starFills(value, max)
   const accessibleLabel =
     label ?? (value == null ? 'Sem nota' : `${formatRating(Math.round(value * 2) / 2)} de ${max} estrelas`)
@@ -88,10 +78,10 @@ export function Stars({ value, size = 'md', max = 5, label, className = '' }: St
     <span
       role="img"
       aria-label={accessibleLabel}
-      className={`inline-flex items-center gap-1.5 ${className}`}
+      className={`inline-flex items-center gap-0.5 ${className}`}
     >
       {fills.map((fill, i) => (
-        <StarIcon key={i} fill={fill} className={sizeClass[size]} />
+        <StarIcon key={i} fill={fill} tone={tone} className={sizeClass[size]} />
       ))}
     </span>
   )

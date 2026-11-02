@@ -6,35 +6,54 @@
  * enxerga essas variáveis (ver tailwindTheme.ts). Tamanhos em px são
  * convertidos para rem, respeitando o tamanho de fonte escolhido pelo usuário.
  *
- * Cores confirmadas pelas variáveis do Figma "App Clube do Livro — Design (PWA)".
+ * Paleta e fontes do design "Dois Amores · clube do livro" (scrapbook).
  */
 
 export const palette = {
-  green: '#2D4A2F',
-  pink: '#F28CA5',
-  pinkLight: '#F9C6D3',
-  /** Rosa escurecido para textos funcionais: contraste ≥ 4.5:1 sobre papel e creme. */
-  pinkStrong: '#B03A5E',
-  cream: '#FDF9EC',
-  paper: '#EFE6D2',
-  white: '#FFFFFF',
+  green: '#0B5130',
+  greenDark: '#08391F',
+  cream: '#FBF8EC',
+  kraft: '#EFE8DA',
+  stripeLight: '#FBF5E8',
+  /** Rosa claro das pílulas, listras e botões secundários (texto verde por cima: 6,1:1). */
+  pinkPill: '#F6C4D0',
+  /** Rosa dos fios e divisórias (decorativo). */
+  pinkLine: '#E8879E',
+  /** Rosa do avatar e da moldura polaroid (decorativo). */
+  pinkAvatar: '#EE8AA0',
+  /** Rosa dos títulos cursivos: 4:1 sobre o creme, só para texto grande (≥ 24px). */
+  pinkTitle: '#C9506F',
+  /** Rosa escurecido para textos funcionais: contraste ≥ 4.5:1 sobre creme e kraft. */
+  pinkStrong: '#B03F5E',
+  shelfShadow: '#D9CBB0',
+  dashed: '#CDBF9F',
+  /** Texto secundário (≥ 5:1 sobre creme e kraft). */
+  muted: '#6E6040',
   danger: '#9E2A2B',
 } as const
 
 export const tokens = {
   color: {
     primary: palette.green,
-    accent: palette.pink,
+    primaryHover: palette.greenDark,
+    accent: palette.pinkAvatar,
     accentStrong: palette.pinkStrong,
-    stripe: palette.pinkLight,
+    title: palette.pinkTitle,
+    pill: palette.pinkPill,
+    line: palette.pinkLine,
+    stripe: palette.pinkPill,
+    stripeLight: palette.stripeLight,
     page: palette.cream,
-    card: palette.paper,
-    inverse: palette.white,
+    card: palette.kraft,
+    inverse: palette.cream,
     border: palette.green,
+    muted: palette.muted,
+    slot: palette.dashed,
+    shelfShadow: palette.shelfShadow,
     ratingFilled: palette.green,
-    ratingEmpty: palette.pink,
+    ratingEmpty: palette.green,
     navActive: palette.green,
-    navInactive: palette.pinkStrong,
+    navInactive: palette.green,
     danger: palette.danger,
     transparent: 'transparent',
     current: 'currentColor',
@@ -51,6 +70,7 @@ export const tokens = {
       fallback: 'cursive',
       files: [{ src: '/fonts/PinyonScript-Regular.ttf', weight: 400 }],
     },
+    /** Rótulos e botões: máquina de escrever em negrito, caixa alta. */
     mono: {
       family: 'Courier Prime',
       fallback: '"Courier New", monospace',
@@ -59,11 +79,19 @@ export const tokens = {
         { src: '/fonts/CourierPrime-Bold.ttf', weight: 700 },
       ],
     },
-    hand: {
-      family: 'Caveat',
-      fallback: 'cursive',
-      files: [{ src: '/fonts/Caveat-Regular.ttf', weight: 400 }],
+    /** Títulos de livros (tipo de máquina gasta). */
+    type: {
+      family: 'Special Elite',
+      fallback: '"Courier New", monospace',
+      files: [{ src: '/fonts/SpecialElite-Regular.ttf', weight: 400 }],
     },
+    /** Texto corrido manuscrito: comentários, citações, nomes de autores. */
+    hand: {
+      family: 'Shadows Into Light Two',
+      fallback: 'cursive',
+      files: [{ src: '/fonts/ShadowsIntoLightTwo-Regular.ttf', weight: 400 }],
+    },
+    /** Campos de formulário e textos longos (resumos): leitura confortável. */
     sans: {
       family: 'Inter',
       fallback: 'system-ui, -apple-system, "Segoe UI", sans-serif',
@@ -86,10 +114,17 @@ export const tokens = {
     'title-sm': 22,
     '2xl': 24,
     'title-md': 28,
-    '3xl': 30,
+    '3xl': 32,
     '4xl': 36,
-    '5xl': 40,
+    stat: 38,
+    '5xl': 44,
     '6xl': 56,
+  },
+
+  fontWeight: {
+    normal: 400,
+    semibold: 600,
+    bold: 700,
   },
 
   lineHeight: {
@@ -106,7 +141,7 @@ export const tokens = {
     wide: '0.04em',
   },
 
-  /** px — escala de espaçamentos (grade de 4px do Figma) */
+  /** px — escala de espaçamentos (grade de 4px) */
   space: {
     '0': 0,
     px: 1,
@@ -114,39 +149,81 @@ export const tokens = {
     '1': 4,
     '1.5': 6,
     '2': 8,
+    '2.5': 10,
     '3': 12,
+    '3.5': 14,
     '4': 16,
     '5': 20,
     '6': 24,
     '8': 32,
     '10': 40,
+    '9': 36,
+    '11': 44,
     '12': 48,
+    '13': 52,
+    '15': 60,
     '16': 64,
+    '24': 96,
   },
 
   /** px — dimensões fixas de elementos (capas, avatares, estrelas, navegação) */
   size: {
+    'star-xs': 10,
     'star-sm': 12,
     'star-md': 16,
     'star-post': 18,
-    'star-lg': 20,
+    'star-lg': 24,
+    'icon-sm': 18,
+    'pill-h': 40,
+    'rating-label-w': 112,
+    'button-sm-h': 36,
+    header: 128,
+    'club-header': 196,
+    'club-badge': 84,
+    icon: 24,
+    'avatar-xs': 38,
     'avatar-sm': 44,
     'avatar-md': 56,
+    'avatar-podium-3': 56,
+    'avatar-podium-2': 60,
+    'avatar-podium-1': 72,
     'avatar-lg': 88,
+    'avatar-xl': 200,
+    swatch: 44,
     'cover-xs-w': 40,
     'cover-xs-h': 56,
+    'feed-cover-w': 52,
+    'feed-cover-h': 76,
     'club-xs-w': 56,
     'club-xs-h': 80,
-    /** listras rosa e creme da capa da revista (prévia) */
-    stripe: 12,
+    'stamp-w': 74,
+    'stamp-h': 106,
+    'track-w': 78,
+    'track-h': 112,
+    /** listras rosa e creme (cabeçalhos, pódio, prévia da revista) */
+    stripe: 13,
+    /** selo picotado em volta das capas: margem, grade e raio dos furos */
+    'stamp-pad': 4,
+    'stamp-grid': 7,
+    'stamp-dot': 2,
+    /** recorte semicircular nas laterais do ingresso */
+    'ticket-notch': 12,
     'cover-sm-w': 80,
     'cover-sm-h': 120,
     'cover-md-w': 100,
     'cover-md-h': 150,
     'cover-lg-w': 140,
     'cover-lg-h': 210,
+    plank: 7,
+    'tape-w': 80,
+    'tape-h': 24,
+    'podium-1': 104,
+    'podium-2': 76,
+    'podium-3': 54,
+    progress: 10,
+    preview: 290,
     'control-h': 48,
-    'nav-h': 72,
+    'nav-h': 84,
     'sidebar-w': 240,
     'content-max': 480,
     'content-wide': 960,
@@ -155,22 +232,36 @@ export const tokens = {
   /** px */
   radius: {
     none: 0,
-    sm: 8,
-    card: 16,
+    xs: 2,
+    sm: 4,
+    card: 6,
+    pill: 12,
     full: 9999,
   },
 
   /** px */
   borderWidth: {
     '0': 0,
-    DEFAULT: 2,
+    DEFAULT: 1.5,
     thin: 1,
+    thick: 2.5,
   },
 
   shadow: {
     none: 'none',
-    card: '0 1px 2px rgb(45 74 47 / 0.08)',
-    raised: '0 6px 20px rgb(45 74 47 / 0.16)',
+    card: '0 1px 2px rgb(11 81 48 / 0.08)',
+    raised: '0 6px 20px rgb(11 81 48 / 0.16)',
+    lift: '0 3px 0 rgb(11 81 48 / 0.15)',
+    plank: `0 3px 0 ${palette.shelfShadow}`,
+    spine: '2px 0 0 rgb(11 81 48 / 0.25)',
+  },
+
+  /** graus — inclinação dos elementos colados (fitas, selos, polaroid) */
+  tilt: {
+    half: 0.5,
+    '1': 1.5,
+    '2': 3,
+    '3': 6,
   },
 
   /** px */
@@ -185,6 +276,7 @@ export const tokens = {
 
   /** px — larguras mínimas dos breakpoints (mobile first) */
   breakpoint: {
+    sm: 560,
     md: 768,
     lg: 1024,
   },

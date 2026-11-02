@@ -1,15 +1,11 @@
-import { useState } from 'react'
-import { useLocation, useParams } from 'react-router'
+import { useState, type ReactNode } from 'react'
+import { Link, useLocation, useParams } from 'react-router'
+import { ReviewCard } from '@/components/ReviewCard'
 import { BookCover } from '@/components/ui/BookCover'
 import { Button, ButtonLink } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { FormMessage } from '@/components/ui/FormMessage'
-import { Stars } from '@/components/ui/Stars'
+import { Icon, type IconName } from '@/components/ui/Icon'
 import { HandText } from '@/components/ui/Typography'
-import type { Reading } from '@/features/readings/api'
-import { RANK_FIELDS } from '@/features/readings/validation'
-import { formatDateShort } from '@/lib/dates'
-import { memberAverage } from '@/lib/domain/ratings'
 import { formatCount } from '@/lib/domain/stats'
 import {
   useBook,
@@ -33,30 +29,52 @@ export function BookPage() {
   if (isError || !book) return <FormMessage tone="error">Livro não encontrado.</FormMessage>
 
   return (
-    <article className="flex flex-col gap-4">
+    <article className="flex flex-col gap-3">
+      <div className="stripes -mx-5 -mt-12 flex h-header items-start justify-between px-4 pt-11 lg:mx-0 lg:mt-0 lg:rounded-card">
+        <PillLink to="/meus-livros" icon="back">
+          livros
+        </PillLink>
+        {reading && (
+          <PillLink to={`/leituras/${reading.id}/editar`} icon="feed" solid>
+            Editar
+          </PillLink>
+        )}
+      </div>
+
+      <div className="-mt-13 flex items-end gap-3.5 px-1">
+        <BookCover title={book.title} url={book.cover_url} size="md" stamp decorative className="tilt-l2" />
+        <div className="flex min-w-0 flex-1 flex-col gap-1 pb-1">
+          <h1 className="font-type font-normal text-xl leading-tight break-words">{book.title}</h1>
+          {book.author && <p className="font-hand text-lg leading-none">{book.author}</p>}
+          {book.pages && (
+            <span className="self-start rounded-pill bg-pill px-2 py-0.5 font-mono font-bold text-2xs uppercase tracking-label">
+              {formatCount(book.pages)} páginas
+            </span>
+          )}
+        </div>
+      </div>
+
       {flash && <FormMessage tone="success">{flash}</FormMessage>}
 
-      <div className="flex justify-center">
-        <BookCover title={book.title} url={book.cover_url} size="lg" decorative />
-      </div>
-      <h1 className="text-center font-display text-4xl uppercase leading-none text-primary">{book.title}</h1>
-      {book.author && <p className="text-center font-mono text-xs uppercase text-primary">{book.author}</p>}
-      {book.pages && (
-        <p className="text-center font-mono text-xs uppercase text-primary">{formatCount(book.pages)} páginas</p>
-      )}
       <Summary book={book} />
 
-      {readingLoading ? null : reading ? (
-        <>
-          <MyReading reading={reading} />
-          <ButtonLink to={`/leituras/${reading.id}/editar`} variant="outline" className="text-base">
-            EDITAR
-          </ButtonLink>
-        </>
-      ) : (
-        <NotStarted bookId={book.id} />
-      )}
+      {readingLoading ? null : reading ? <ReviewCard title="seus dados" review={reading} /> : <NotStarted bookId={book.id} />}
     </article>
+  )
+}
+
+function PillLink({ to, icon, solid = false, children }: { to: string; icon: IconName; solid?: boolean; children: ReactNode }) {
+  return (
+    <Link
+      to={to}
+      className={
+        'inline-flex min-h-pill-h items-center gap-1 rounded-full border border-primary px-3 font-mono font-bold text-xs uppercase tracking-label no-underline ' +
+        (solid ? 'bg-primary text-inverse hover:text-inverse' : 'bg-page text-primary')
+      }
+    >
+      <Icon name={icon} className="size-icon-sm" />
+      {children}
+    </Link>
   )
 }
 
@@ -73,77 +91,51 @@ function Summary({ book }: { book: BookDetail }) {
   const text = book.summary
   if (!text) {
     return (
-      <HandText className="text-center">
-        {enrichment.isFetching ? 'buscando a sinopse em português…' : 'sem resumo disponível'}
-      </HandText>
+      <SummaryBox>
+        <HandText className="text-muted">
+          {enrichment.isFetching ? 'buscando a sinopse em português…' : 'sem resumo disponível'}
+        </HandText>
+      </SummaryBox>
     )
   }
   const long = text.length > SUMMARY_PREVIEW_CHARS
   const shown = long && !expanded ? `${text.slice(0, SUMMARY_PREVIEW_CHARS).trimEnd()}…` : text
   return (
-    <div className="flex flex-col items-center gap-1">
-      <HandText className="text-center whitespace-pre-line">{shown}</HandText>
+    <SummaryBox>
+      <p className="font-sans text-sm leading-relaxed whitespace-pre-line">{shown}</p>
       {long && (
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className="font-sans text-sm text-primary underline underline-offset-4"
+          className="self-start font-hand text-md text-primary underline underline-offset-4"
         >
           {expanded ? 'mostrar menos' : 'ler resumo completo'}
         </button>
       )}
       {enrichment.isFetching && (
-        <p role="status" className="font-mono text-2xs uppercase tracking-label text-primary">
+        <p role="status" className="font-mono font-bold text-2xs uppercase tracking-label text-primary">
           buscando a edição em português…
         </p>
       )}
       {translation.isFetching && (
-        <p role="status" className="font-mono text-2xs uppercase tracking-label text-primary">
+        <p role="status" className="font-mono font-bold text-2xs uppercase tracking-label text-primary">
           traduzindo para o português…
         </p>
       )}
       {book.summary_source === 'ai_translation' && (
         <p className="font-hand text-lg text-accentStrong">resumo traduzido por IA</p>
       )}
+    </SummaryBox>
+  )
+}
+
+function SummaryBox({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-card border border-dashed border-slot px-3 py-2.5">
+      <span className="font-mono font-bold text-2xs uppercase tracking-label">resumo</span>
+      {children}
     </div>
-  )
-}
-
-function DataLine({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <p className="font-mono text-xs text-primary">
-      {label}: {children}
-    </p>
-  )
-}
-
-function MyReading({ reading }: { reading: Reading }) {
-  const average = memberAverage(reading)
-  return (
-    <Card className="flex flex-col gap-2.5">
-      <h2 className="font-display text-title-sm uppercase leading-none text-primary">Seus dados</h2>
-      <DataLine label="Início">{formatDateShort(reading.started_on)}</DataLine>
-      <DataLine label="Fim">{reading.finished_on ? formatDateShort(reading.finished_on) : 'em andamento'}</DataLine>
-
-      {average != null && <Stars value={average} size="lg" />}
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
-        {RANK_FIELDS.map(({ key, label }) => (
-          <div key={key} className="flex items-center justify-between gap-2">
-            <dt className="font-mono text-2xs uppercase tracking-label text-primary">{label}</dt>
-            <dd>
-              <Stars value={reading[key]} size="sm" />
-            </dd>
-          </div>
-        ))}
-      </dl>
-
-      <p className="font-sans text-sm text-primary">
-        Personagem favorito: {reading.favorite_character ?? <span className="opacity-70">não informado</span>}
-      </p>
-      <HandText>Citação favorita: {reading.favorite_quote ?? 'nenhuma ainda'}</HandText>
-      <HandText>Comentário: {reading.comment ?? 'nenhum ainda'}</HandText>
-    </Card>
   )
 }
 
@@ -152,9 +144,7 @@ function NotStarted({ bookId }: { bookId: string }) {
   const toggle = useWishlistToggle()
   return (
     <div className="flex flex-col gap-2">
-      <ButtonLink to={`/publicar?livro=${bookId}`} className="text-base">
-        COMEÇAR A LER
-      </ButtonLink>
+      <ButtonLink to={`/publicar?livro=${bookId}`}>Começar a ler</ButtonLink>
       <Button
         variant="outline"
         loading={toggle.isPending}

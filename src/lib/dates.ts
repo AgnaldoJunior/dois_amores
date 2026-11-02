@@ -14,6 +14,13 @@ export function formatDateShort(iso: string | null | undefined): string {
   return `${String(d.day).padStart(2, '0')} ${MONTHS_SHORT[d.month - 1]} ${d.year}`
 }
 
+/** "12/10" — dia e mês, como nos carimbos do design. */
+export function formatDayMonth(iso: string | null | undefined): string {
+  const d = iso ? parseIsoDate(iso) : null
+  if (!d) return ''
+  return `${String(d.day).padStart(2, '0')}/${String(d.month).padStart(2, '0')}`
+}
+
 /** Data local de hoje no formato do <input type="date">. */
 export function todayIso(now = new Date()): string {
   const y = now.getFullYear()

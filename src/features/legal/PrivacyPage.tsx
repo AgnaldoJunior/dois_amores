@@ -4,7 +4,7 @@ import { AuthLayout, TextLink } from '@/features/auth/AuthLayout'
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="font-display text-2xl uppercase leading-none text-primary">{title}</h2>
+      <h2 className="font-script font-normal text-3xl leading-none text-title">{title}</h2>
       <div className="flex flex-col gap-2 font-sans text-sm leading-relaxed text-primary">{children}</div>
     </section>
   )
@@ -14,7 +14,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export function PrivacyPage() {
   return (
     <AuthLayout title="Política de privacidade">
-      <p className="font-mono text-xs uppercase tracking-label text-primary">Atualizada em 21 de outubro de 2026</p>
+      <p className="font-mono font-bold text-xs uppercase tracking-label text-primary">Atualizada em 21 de outubro de 2026</p>
 
       <Section title="O que é o Dois Amores">
         <p>

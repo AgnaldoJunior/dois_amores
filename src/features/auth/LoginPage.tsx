@@ -6,7 +6,7 @@ import { TextField } from '@/components/ui/TextField'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { translateAuthError } from '@/lib/auth/authErrors'
 import { supabase } from '@/lib/supabase'
-import { AuthLayout, TextLink } from './AuthLayout'
+import { AuthLayout, OrDivider, TextLink } from './AuthLayout'
 import { authRedirect, safeNext } from './authRedirects'
 
 export function LoginPage() {
@@ -67,18 +67,22 @@ export function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        <TextLink to="/recuperar-senha" className="self-end -mt-1.5">
+          Esqueci minha senha
+        </TextLink>
         <FormMessage tone="error">{error}</FormMessage>
         <Button type="submit" loading={submitting}>
           Entrar
         </Button>
       </form>
-      <ButtonLink to="/cadastro" variant="outline">
+      <ButtonLink to="/cadastro" variant="secondary">
         Criar conta
       </ButtonLink>
+      <OrDivider />
       <Button variant="outline" onClick={onGoogle} loading={googleLoading}>
+        <span aria-hidden="true" className="font-display text-xl leading-none">G</span>
         Continuar com Google
       </Button>
-      <TextLink to="/recuperar-senha">Esqueci minha senha</TextLink>
       <TextLink to="/privacidade">Privacidade</TextLink>
     </AuthLayout>
   )

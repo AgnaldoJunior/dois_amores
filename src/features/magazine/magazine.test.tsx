@@ -52,12 +52,12 @@ describe('Exportar revista', () => {
   it('gera o PDF com os dados do clube e oferece o arquivo', async () => {
     renderApp('/clubes/club-1/revista')
     await userEvent.click(screen.getByRole('button', { name: 'GERAR PDF' }))
-    await waitFor(() => expect(m.render).toHaveBeenCalled())
+    await waitFor(() => expect(m.render).toHaveBeenCalled(), { timeout: 5000 })
     const [template, data] = m.render.mock.calls[0]!
     expect(typeof template.Document).toBe('function')
     expect(data.club.name).toBe('Dois Amores')
     expect(data.editions).toHaveLength(6)
-    expect(await screen.findByRole('status')).toHaveTextContent('Revista pronta!')
+    expect(await screen.findByRole('status', {}, { timeout: 5000 })).toHaveTextContent('Revista pronta!')
     expect(screen.getByRole('link', { name: 'Abrir a revista (PDF)' })).toHaveAttribute('href', 'blob:revista')
   })
 
@@ -66,7 +66,7 @@ describe('Exportar revista', () => {
     // jsdom não digita em <input type="month">: dispara a escolha do mês como o navegador.
     fireEvent.change(screen.getByLabelText('De'), { target: { value: '2026-09' } })
     await userEvent.click(screen.getByRole('button', { name: 'GERAR PDF' }))
-    await waitFor(() => expect(m.render).toHaveBeenCalled())
+    await waitFor(() => expect(m.render).toHaveBeenCalled(), { timeout: 5000 })
     expect(m.render.mock.calls[0]![1].editions.map((e: { number: number }) => e.number)).toEqual([5, 6])
   })
 

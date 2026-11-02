@@ -85,7 +85,7 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
 
   return (
     <div className="relative flex flex-col gap-2">
-      <label htmlFor={id} className="font-mono text-xs uppercase tracking-label text-primary">
+      <label htmlFor={id} className="font-mono font-bold text-xs uppercase tracking-label text-primary">
         {label}
       </label>
       <input
@@ -110,7 +110,7 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
         className={
-          'h-control-h w-full rounded-card border border-primary bg-card px-4 ' +
+          'h-control-h w-full rounded-sm border border-primary bg-page px-3 ' +
           'font-sans text-md text-primary placeholder:text-primary placeholder:opacity-60'
         }
       />
@@ -122,7 +122,7 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
         role="listbox"
         aria-label="Sugestões de livros"
         hidden={!visible}
-        className="flex flex-col gap-1 rounded-card bg-card p-2"
+        className="flex flex-col rounded-card border border-primary bg-card"
       >
         {results.map((book, i) => (
           <li
@@ -135,8 +135,8 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
             onClick={() => choose(book)}
             onMouseEnter={() => setActive(i)}
             className={
-              'flex cursor-pointer items-center gap-3 rounded-sm p-1 ' +
-              (i === activeIndex ? 'outline outline-primary' : '')
+              'flex cursor-pointer items-center gap-3 border-b border-dashed border-slot px-3 py-2 last:border-b-0 ' +
+              (i === activeIndex ? 'bg-pill' : '')
             }
           >
             <BookCover
@@ -146,8 +146,8 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
               decorative
             />
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="truncate font-sans text-sm text-primary">{book.title}</span>
-              <span className="truncate font-mono text-xs text-primary">
+              <span className="truncate font-type text-sm text-primary">{book.title}</span>
+              <span className="truncate font-hand text-md leading-none text-primary">
                 {[book.author, book.year].filter(Boolean).join(' · ')}
               </span>
             </span>

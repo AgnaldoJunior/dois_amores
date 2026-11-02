@@ -61,7 +61,7 @@ export function CreateClubPage() {
       </div>
 
       {error && <FormMessage tone="error">{error}</FormMessage>}
-      <Button type="submit" loading={create.isPending} className="text-base">
+      <Button type="submit" loading={create.isPending}>
         CRIAR CLUBE
       </Button>
     </form>

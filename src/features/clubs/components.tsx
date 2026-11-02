@@ -10,23 +10,31 @@ import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { proposalState } from '@/lib/domain/clubs'
 import { useVote, useWithdrawProposal, type ClubBook, type ClubMember } from './api'
 
-/** Capa do livro do clube com a média do clube e uma linha de rodapé. */
+/** Livro do clube de pé na prateleira: capa, tábua e, embaixo, nota e edição. */
 export function ClubBookTile({ clubBook, average, footer }: { clubBook: ClubBook; average?: number | null; footer?: ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Link to={`/livros/${clubBook.book.id}`} className="rounded-card" aria-label={clubBook.book.title}>
-        <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="md" decorative />
+    <li className="flex shrink-0 flex-col justify-end">
+      <Link to={`/livros/${clubBook.book.id}`} className="relative z-1 block px-1" aria-label={clubBook.book.title}>
+        <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="feed" decorative framed={false} className="shadow-spine" />
       </Link>
-      {average !== undefined && <Stars value={average} size="sm" />}
-      {footer}
-    </div>
+      <span aria-hidden="true" className="plank -mt-0.5 rounded-none" />
+      <div className="flex flex-col items-center gap-0.5 px-1 pt-1">
+        {average !== undefined && <Stars value={average} size="xs" className="gap-px" />}
+        {footer}
+      </div>
+    </li>
   )
 }
 
+/** Prateleira horizontal (rola de lado quando não cabe); a tábua continua até o fim da linha. */
 export function ClubBookGrid({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <ul aria-label={label} className="grid grid-cols-3 gap-3 md:grid-cols-5">
+    <ul aria-label={label} className="flex items-stretch overflow-x-auto pb-1">
       {children}
+      <li aria-hidden="true" className="flex min-w-4 flex-1 flex-col justify-end">
+        <span className="plank rounded-none" />
+        <span className="min-h-star-lg" />
+      </li>
     </ul>
   )
 }
@@ -50,16 +58,16 @@ export function ProposalCard({ clubBook, members }: { clubBook: ClubBook; member
   }
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Card className="flex flex-col gap-3 p-3">
       <div className="flex gap-3">
-        <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="sm" decorative />
+        <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="stamp" stamp decorative />
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-          <h3 className="font-display text-title-sm uppercase leading-none text-primary">{clubBook.book.title}</h3>
-          {clubBook.book.author && <p className="font-mono text-xs text-primary">{clubBook.book.author}</p>}
-          {proposer && <HandText>Proposto por {proposer}</HandText>}
+          <h3 className="font-type font-normal text-md leading-tight">{clubBook.book.title}</h3>
+          {clubBook.book.author && <p className="font-hand text-md leading-none">{clubBook.book.author}</p>}
+          {proposer && <HandText className="text-accentStrong">Proposto por {proposer}</HandText>}
         </div>
       </div>
-      <Label className="tracking-normal normal-case">
+      <Label className="text-2xs">
         {state.approved} de {state.total} {state.total === 1 ? 'membro aprovou' : 'membros aprovaram'}
       </Label>
 
@@ -84,13 +92,13 @@ export function ProposalCard({ clubBook, members }: { clubBook: ClubBook; member
         </div>
       )}
       {!state.canVote && (
-        <p className="font-sans text-sm text-primary">Você entrou no clube depois desta proposta e não vota nela.</p>
+        <p className="font-hand text-md">Você entrou no clube depois desta proposta e não vota nela.</p>
       )}
       {clubBook.proposed_by === user.id && (
         <button
           type="button"
           onClick={() => withdraw.mutate(clubBook.id)}
-          className="self-start font-sans text-sm text-primary underline underline-offset-4"
+          className="self-start font-hand text-md text-primary underline underline-offset-4"
         >
           Retirar proposta
         </button>

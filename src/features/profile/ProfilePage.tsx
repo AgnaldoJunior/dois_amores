@@ -115,13 +115,13 @@ function ProfileForm({ profile }: { profile: Profile }) {
         Sair
       </Button>
 
-      <Link to="/privacidade" className="self-center font-sans text-sm text-primary underline underline-offset-4">
+      <Link to="/privacidade" className="self-center font-hand text-md text-primary underline underline-offset-4">
         Política de privacidade
       </Link>
 
       <Card className="flex flex-col gap-3">
         <SectionTitle>Excluir conta</SectionTitle>
-        <p className="font-sans text-sm text-primary">
+        <p className="font-hand text-md text-primary">
           Apaga seu perfil, suas leituras, seus posts e sua foto. Clubes que você criou passam para o membro mais
           antigo. Não dá para desfazer.
         </p>

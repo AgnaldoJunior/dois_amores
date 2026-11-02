@@ -22,6 +22,7 @@ export const tailwindTheme = {
   colors: mapVars('color', tokens.color),
   fontFamily: mapVars('font', tokens.font),
   fontSize: mapVars('text', tokens.fontSize),
+  fontWeight: mapVars('weight', tokens.fontWeight),
   lineHeight: mapVars('leading', tokens.lineHeight),
   letterSpacing: mapVars('tracking', tokens.letterSpacing),
   spacing,

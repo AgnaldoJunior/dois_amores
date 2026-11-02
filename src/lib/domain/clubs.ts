@@ -76,3 +76,6 @@ export function memberStats(readings: ReadingLike[]) {
 export const normalizeInviteCode = (code: string) => code.replace(/\s+/g, '').toUpperCase()
 
 export const isValidInviteCode = (code: string) => /^[A-HJ-NP-Z2-9]{6}$/.test(normalizeInviteCode(code))
+
+/** Número da edição como nos ingressos: 8 → "No.08". */
+export const formatEdition = (n: number | null | undefined) => (n == null ? '' : `No.${String(n).padStart(2, '0')}`)

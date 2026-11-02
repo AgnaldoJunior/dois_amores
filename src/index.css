@@ -19,9 +19,15 @@
     min-height: 100dvh;
     background-color: var(--da-color-page);
     color: var(--da-color-primary);
+    font-family: var(--da-font-hand);
+    font-size: var(--da-text-lg);
+    line-height: var(--da-leading-tight);
+  }
+
+  input,
+  textarea,
+  select {
     font-family: var(--da-font-sans);
-    font-size: var(--da-text-md);
-    line-height: var(--da-leading-normal);
   }
 
   :focus-visible {
@@ -36,5 +42,75 @@
       transition-duration: 0s !important;
       animation-duration: 0s !important;
     }
+  }
+}
+
+/* Padrões do scrapbook. Valores vêm das variáveis dos tokens (src/theme/tokens.ts). */
+@layer components {
+  /* Selo postal: moldura verde picotada em volta da capa. */
+  .stamp {
+    box-sizing: border-box;
+    flex: none;
+    padding: var(--da-size-stamp-pad);
+    background-color: var(--da-color-primary);
+    background-image: radial-gradient(
+      circle,
+      var(--da-color-page) calc(var(--da-size-stamp-dot) * 0.8),
+      transparent var(--da-size-stamp-dot)
+    );
+    background-size: var(--da-size-stamp-grid) var(--da-size-stamp-grid);
+    background-position: calc(var(--da-size-stamp-grid) / -2) calc(var(--da-size-stamp-grid) / -2);
+  }
+
+  /* Ingresso: recortes semicirculares nas laterais. */
+  .ticket {
+    --notch: radial-gradient(circle var(--da-size-ticket-notch) at 0 50%, transparent 97%, black);
+    --notch-r: radial-gradient(circle var(--da-size-ticket-notch) at 100% 50%, transparent 97%, black);
+    -webkit-mask:
+      var(--notch) left / 51% 100% no-repeat,
+      var(--notch-r) right / 51% 100% no-repeat;
+    mask:
+      var(--notch) left / 51% 100% no-repeat,
+      var(--notch-r) right / 51% 100% no-repeat;
+  }
+
+  /* Listras verticais rosa e creme. */
+  .stripes {
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--da-color-stripe) 0 var(--da-size-stripe),
+      var(--da-color-stripeLight) var(--da-size-stripe) calc(var(--da-size-stripe) * 2)
+    );
+  }
+
+  /* Tábua da estante, ocupa a linha inteira da grade. */
+  .plank {
+    display: block;
+    grid-column: 1 / -1;
+    height: var(--da-size-plank);
+    margin-top: calc(var(--da-space-2_5) * -1);
+    border-radius: var(--da-radius-xs);
+    background-color: var(--da-color-primary);
+    box-shadow: var(--da-shadow-plank);
+  }
+
+  /* Fio rosa dos títulos de seção. */
+  .rule {
+    flex: 1;
+    height: var(--da-border);
+    background-color: var(--da-color-line);
+  }
+
+  /* Elementos "colados" levemente tortos. */
+  .tilt-l-half { rotate: calc(var(--da-tilt-half) * -1); }
+  .tilt-r-half { rotate: var(--da-tilt-half); }
+  .tilt-l1 { rotate: calc(var(--da-tilt-1) * -1); }
+  .tilt-r1 { rotate: var(--da-tilt-1); }
+  .tilt-l2 { rotate: calc(var(--da-tilt-2) * -1); }
+  .tilt-r2 { rotate: var(--da-tilt-2); }
+  .tilt-r3 { rotate: var(--da-tilt-3); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tilt-l-half, .tilt-r-half, .tilt-l1, .tilt-r1, .tilt-l2, .tilt-r2, .tilt-r3 { rotate: none; }
   }
 }

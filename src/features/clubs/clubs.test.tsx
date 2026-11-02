@@ -181,7 +181,7 @@ describe('página do clube', () => {
     const finished = screen.getByRole('list', { name: 'Livros concluídos no clube' })
     expect(within(finished).getByRole('link', { name: 'Três' })).toBeInTheDocument()
     expect(within(finished).getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument() // (5 + 4) / 2
-    expect(within(finished).getByText(/Edição 5/)).toBeInTheDocument()
+    expect(within(finished).getByText('No.05')).toBeInTheDocument()
 
     const reading = screen.getByRole('list', { name: 'Livros em leitura no clube' })
     expect(within(reading).getByRole('link', { name: 'Amanhecer na colheita' })).toBeInTheDocument()
@@ -245,7 +245,7 @@ describe('perfil do membro', () => {
     expect(within(stats).getByText('2')).toBeInTheDocument()
     expect(within(stats).getByText('300')).toBeInTheDocument()
     expect(within(stats).getByText('4,0')).toBeInTheDocument()
-    expect(screen.getByRole('list', { name: 'Livros de Irla' }).children).toHaveLength(2)
+    expect(within(screen.getByRole('list', { name: 'Livros de Irla' })).getAllByRole('link')).toHaveLength(2)
   })
 })
 

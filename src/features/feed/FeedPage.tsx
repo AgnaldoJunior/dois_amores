@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormMessage } from '@/components/ui/FormMessage'
-import { PageTitle } from '@/components/ui/Typography'
 import { useFeed } from './api'
 import { PostCard } from './PostCard'
 
@@ -11,7 +10,12 @@ export function FeedPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageTitle>Feed</PageTitle>
+      <header className="flex items-center gap-2.5">
+        <span className="rule" aria-hidden="true" />
+        <h1 className="tilt-l2 bg-primary px-4 pt-1 font-display font-normal text-5xl leading-none text-inverse">Feed</h1>
+        <span className="font-script text-title-md leading-none text-title">das amigas</span>
+        <span className="rule" aria-hidden="true" />
+      </header>
 
       {isLoading && <p className="font-hand text-lg text-primary">Carregando leituras…</p>}
 
@@ -28,7 +32,7 @@ export function FeedPage() {
         <EmptyState>Ninguém terminou um livro ainda. Que tal ser a primeira pessoa?</EmptyState>
       )}
 
-      <ul className="flex flex-col gap-4" aria-label="Leituras concluídas">
+      <ul className="flex flex-col gap-3.5" aria-label="Leituras concluídas">
         {posts.map((post) => (
           <li key={post.id}>
             <PostCard post={post} />

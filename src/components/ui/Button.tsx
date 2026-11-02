@@ -1,19 +1,21 @@
 import type { ButtonHTMLAttributes } from 'react'
 import { Link, type LinkProps } from 'react-router'
 
-type Variant = 'primary' | 'outline' | 'danger'
+type Variant = 'primary' | 'secondary' | 'outline' | 'danger'
 
 const variantClass: Record<Variant, string> = {
-  primary: 'bg-primary text-inverse border border-primary',
-  outline: 'bg-transparent text-primary border border-primary',
-  danger: 'bg-danger text-inverse border border-danger',
+  primary: 'bg-primary text-inverse border border-primary hover:bg-primaryHover hover:text-inverse',
+  secondary: 'bg-pill text-primary border border-primary hover:text-primary',
+  outline: 'bg-transparent text-primary border border-primary hover:bg-card hover:text-primary',
+  danger: 'bg-danger text-inverse border border-danger hover:text-inverse',
 }
 
+/** Botão do scrapbook: máquina de escrever em negrito, caixa alta, cantos quase retos. */
 export const buttonClass = (variant: Variant = 'primary', fullWidth = true, className = '') =>
-  `${fullWidth ? 'w-full' : ''} min-h-control-h px-4 py-2 rounded-card ` +
+  `${fullWidth ? 'w-full' : ''} min-h-control-h px-4 py-2 rounded-sm ` +
   `inline-flex items-center justify-center gap-2 ` +
-  `font-sans text-md leading-tight text-center ` +
-  `transition-opacity disabled:opacity-50 disabled:cursor-not-allowed ` +
+  `font-mono font-bold text-xs uppercase tracking-label leading-tight text-center no-underline ` +
+  `transition-colors disabled:opacity-50 disabled:cursor-not-allowed ` +
   `${variantClass[variant]} ${className}`
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

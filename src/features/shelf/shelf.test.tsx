@@ -85,18 +85,19 @@ describe('Meus livros', () => {
     expect(within(read).getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
 
     const reading = screen.getByRole('list', { name: 'Leituras em andamento' })
-    expect(within(reading).getByText('desde 10 OUT 2026')).toBeInTheDocument()
+    expect(within(reading).getByText('desde 10/10')).toBeInTheDocument()
 
     expect(within(screen.getByRole('list', { name: 'Quero ler' })).getByRole('link', { name: 'Quarta asa' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'SUGESTÃO DE PRÓXIMA LEITURA' })).toHaveAttribute('href', '/meus-livros/sugestoes')
+    expect(screen.getByRole('link', { name: 'Sugestão de próxima leitura' })).toHaveAttribute('href', '/meus-livros/sugestoes')
   })
 
-  it('usa um recorte borrado da capa atrás do título', () => {
+  it('mostra a capa real de pé na estante, com a vaga para publicar no fim', () => {
     renderApp('/meus-livros')
-    const cover = screen.getByTestId('shelf-cover')
+    const read = screen.getByRole('list', { name: 'Livros lidos' })
+    const cover = within(read).getByRole('link', { name: 'Três' }).querySelector('img')
     expect(cover).toHaveAttribute('src', 'https://covers.openlibrary.org/b/id/1-L.jpg')
-    expect(cover).toHaveClass('blur-cover')
     expect(cover).toHaveAttribute('alt', '')
+    expect(within(read).getByRole('link', { name: 'Publicar nova leitura' })).toHaveAttribute('href', '/publicar')
   })
 
   it('estados vazios', () => {
@@ -170,19 +171,20 @@ describe('Página do livro', () => {
       comment: 'Me acompanhou por dias.',
     })
     renderApp('/livros/book-1')
-    expect(screen.getByRole('heading', { name: 'Seus dados' })).toBeInTheDocument()
-    expect(screen.getByText('Início: 01 OUT 2026')).toBeInTheDocument()
-    expect(screen.getByText('Fim: 12 OUT 2026')).toBeInTheDocument()
-    expect(screen.getByText('Personagem favorito: Nina')).toBeInTheDocument()
-    expect(screen.getByText('Citação favorita: nenhuma ainda')).toBeInTheDocument()
-    expect(screen.getByText('Comentário: Me acompanhou por dias.')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'EDITAR' })).toHaveAttribute('href', '/leituras/r1/editar')
+    const card = screen.getByRole('region', { name: 'seus dados' })
+    expect(within(card).getByRole('heading', { name: 'seus dados' })).toBeInTheDocument()
+    expect(within(card).getByText('01/10')).toBeInTheDocument()
+    expect(within(card).getByText('12/10')).toBeInTheDocument()
+    expect(within(card).getByText('Nina')).toBeInTheDocument()
+    expect(within(card).getByText('nenhuma ainda')).toBeInTheDocument()
+    expect(within(card).getByText('Me acompanhou por dias.')).toBeInTheDocument()
+    expect(within(card).getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Editar' })).toHaveAttribute('href', '/leituras/r1/editar')
   })
 
   it('livro ainda não lido: começar a ler ou guardar em "Quero ler"', async () => {
     renderApp('/livros/book-1')
-    expect(screen.getByRole('link', { name: 'COMEÇAR A LER' })).toHaveAttribute('href', '/publicar?livro=book-1')
+    expect(screen.getByRole('link', { name: 'Começar a ler' })).toHaveAttribute('href', '/publicar?livro=book-1')
     await userEvent.click(screen.getByRole('button', { name: 'Adicionar a "Quero ler"' }))
     expect(state.toggle).toHaveBeenCalledWith({ bookId: 'book-1', add: true })
   })

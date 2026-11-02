@@ -16,8 +16,9 @@ describe('design tokens → CSS', () => {
     expect(vars['--da-text-md']).toBe('1rem')
     expect(vars['--da-space-0_5']).toBe('0.125rem')
     expect(vars['--da-size-avatar-md']).toBe('3.5rem')
-    expect(vars['--da-radius-card']).toBe('1rem')
-    expect(vars['--da-border']).toBe('2px')
+    expect(vars['--da-radius-card']).toBe('0.375rem')
+    expect(vars['--da-border']).toBe('1.5px')
+    expect(vars['--da-tilt-1']).toBe('1.5deg')
     expect(vars['--da-font-display']).toContain('"Bebas Neue"')
     expect(Object.keys(vars).filter((k) => k.startsWith('--da-color-'))).toHaveLength(
       Object.keys(tokens.color).length,

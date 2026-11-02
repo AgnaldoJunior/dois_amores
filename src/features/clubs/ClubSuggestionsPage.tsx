@@ -59,7 +59,7 @@ export function ClubSuggestionsPage() {
           Gerar outras sugestões
         </Button>
       )}
-      <Link to={clubPath(clubId)} className="self-center font-sans text-sm text-primary underline underline-offset-4">
+      <Link to={clubPath(clubId)} className="self-center font-hand text-md text-primary underline underline-offset-4">
         Voltar para o clube
       </Link>
     </div>
@@ -84,17 +84,17 @@ function ClubSuggestionCard({ clubId, suggestion }: { clubId: string; suggestion
       <div className="flex gap-3">
         <BookCover title={suggestion.title} url={suggestion.coverUrl} size="sm" decorative />
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-          <h2 className="font-display text-title-sm uppercase leading-none text-primary">{suggestion.title}</h2>
-          {suggestion.author && <p className="font-mono text-xs text-primary">{suggestion.author}</p>}
+          <h2 className="font-type font-normal text-md leading-tight text-primary">{suggestion.title}</h2>
+          {suggestion.author && <p className="font-hand text-md leading-none text-primary">{suggestion.author}</p>}
           {suggestion.reason && <HandText>{suggestion.reason}</HandText>}
         </div>
       </div>
       {propose.isSuccess ? (
-        <p role="status" className="font-sans text-sm text-primary">
+        <p role="status" className="font-hand text-md text-primary">
           ✓ Proposto ao clube. Agora é esperar os votos!
         </p>
       ) : (
-        <Button variant="outline" onClick={onPropose} loading={propose.isPending} className="text-base">
+        <Button variant="outline" onClick={onPropose} loading={propose.isPending}>
           PROPOR AO CLUBE
         </Button>
       )}

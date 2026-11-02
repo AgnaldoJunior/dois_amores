@@ -45,7 +45,7 @@ describe('Feed', () => {
     expect(within(item).getByText('Valérie Perrin')).toBeInTheDocument()
     // (5+4+5+4)/4 = 4,5
     expect(within(item).getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
-    expect(within(item).getByText('12 OUT 2026')).toBeInTheDocument()
+    expect(within(item).getByText('12/10')).toBeInTheDocument()
     expect(within(item).getByText(/o final ficou comigo/)).toBeInTheDocument()
   })
 

@@ -1,17 +1,17 @@
 import { useState, type ChangeEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { Avatar } from '@/components/ui/Avatar'
-import { BookCover } from '@/components/ui/BookCover'
 import { Button, ButtonLink, buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { Icon } from '@/components/ui/Icon'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { Label, SectionTitle } from '@/components/ui/Typography'
 import { AVATAR_ACCEPT, validateAvatarFile } from '@/features/profile/imageResize'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { useBackgroundEnrichment } from '@/lib/books/useBackgroundEnrichment'
-import { formatDateShort } from '@/lib/dates'
-import { clubBookAverage, groupClubBooks } from '@/lib/domain/clubs'
+import { formatDayMonth } from '@/lib/dates'
+import { clubBookAverage, formatEdition, groupClubBooks } from '@/lib/domain/clubs'
 import {
   useChangeClubCover,
   useClub,
@@ -38,19 +38,20 @@ export function ClubPage() {
   const groups = groupClubBooks(club.books)
 
   return (
-    <div className="flex flex-col gap-5">
-      {flash && <FormMessage tone="success">{flash}</FormMessage>}
+    <div className="flex flex-col gap-4">
       <ClubHeader club={club} />
+      {flash && <FormMessage tone="success">{flash}</FormMessage>}
 
-      <section aria-label="Membros" className="flex flex-wrap gap-2">
+      <section aria-label="Membros" className="flex flex-wrap justify-around gap-2">
         {club.members.map((m) => (
           <Link
             key={m.user_id}
             to={`${clubPath(club.id)}/membros/${m.user_id}`}
             aria-label={`${m.profile.name}${m.role === 'owner' ? ' (criou o clube)' : ''}`}
-            className="rounded-full"
+            className="flex min-w-15 flex-col items-center gap-0.5 no-underline"
           >
-            <Avatar name={m.profile.name} url={m.profile.avatar_url} size="sm" />
+            <Avatar name={m.profile.name} url={m.profile.avatar_url} size="md" />
+            <span className="font-hand text-base leading-none">{m.profile.name.split(/\s+/)[0]}</span>
           </Link>
         ))}
       </section>
@@ -64,16 +65,14 @@ export function ClubPage() {
         ) : (
           <ClubBookGrid label="Livros em leitura no clube">
             {groups.reading.map((cb) => (
-              <li key={cb.id}>
-                <ClubBookTile clubBook={cb} footer={<FinishButton clubBookId={cb.id} startedOn={cb.started_on} />} />
-              </li>
+              <ClubBookTile key={cb.id} clubBook={cb} footer={<FinishButton clubBookId={cb.id} startedOn={cb.started_on} />} />
             ))}
           </ClubBookGrid>
         )}
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="club-finished">
-        <SectionTitle>
+        <SectionTitle aside={groups.finished.length || undefined}>
           <span id="club-finished">Concluídos</span>
         </SectionTitle>
         {groups.finished.length === 0 ? (
@@ -81,17 +80,12 @@ export function ClubPage() {
         ) : (
           <ClubBookGrid label="Livros concluídos no clube">
             {groups.finished.map((cb) => (
-              <li key={cb.id}>
-                <ClubBookTile
-                  clubBook={cb}
-                  average={clubBookAverage(cb.book.id, club.readings, memberIds)}
-                  footer={
-                    <Label className="text-2xs tracking-normal">
-                      Edição {cb.edition_number} · {formatDateShort(cb.finished_on).slice(3)}
-                    </Label>
-                  }
-                />
-              </li>
+              <ClubBookTile
+                key={cb.id}
+                clubBook={cb}
+                average={clubBookAverage(cb.book.id, club.readings, memberIds)}
+                footer={<Label className="text-2xs">{formatEdition(cb.edition_number)}</Label>}
+              />
             ))}
           </ClubBookGrid>
         )}
@@ -112,15 +106,18 @@ export function ClubPage() {
         </section>
       )}
 
-      <div className="flex flex-col gap-3">
-        <ButtonLink to={`${clubPath(club.id)}/propor`} className="text-base">
+      <div className="grid grid-cols-2 gap-2.5">
+        <ButtonLink to={`${clubPath(club.id)}/propor`}>
+          <Icon name="plus" className="size-icon-sm" />
           PROPOR LIVRO
         </ButtonLink>
-        <ButtonLink to={`${clubPath(club.id)}/sugestoes`} variant="outline" className="text-base">
-          SUGESTÃO DO CLUBE
-        </ButtonLink>
-        <ButtonLink to={`${clubPath(club.id)}/revista`} variant="outline" className="text-base">
+        <ButtonLink to={`${clubPath(club.id)}/revista`} variant="secondary">
+          <Icon name="magazine" className="size-icon-sm" />
           EXPORTAR REVISTA
+        </ButtonLink>
+        <ButtonLink to={`${clubPath(club.id)}/sugestoes`} variant="outline" className="col-span-2">
+          <Icon name="sparkle" className="size-icon-sm" />
+          SUGESTÃO DO CLUBE
         </ButtonLink>
       </div>
 
@@ -145,26 +142,39 @@ function ClubHeader({ club }: { club: ClubDetail }) {
   }
 
   return (
-    <header className="flex items-center gap-4">
-      <BookCover title={club.name} url={club.cover_url} size="sm" decorative />
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <h1 className="font-script text-4xl leading-tight text-primary">{club.name}</h1>
-        <p className="font-mono text-xs uppercase tracking-label text-primary">
-          Código: <strong className="font-mono">{club.invite_code}</strong>
-        </p>
-        <Button variant="outline" onClick={copy} aria-live="polite">
-          {copied ? 'CÓDIGO COPIADO ✓' : 'COPIAR CÓDIGO'}
-        </Button>
-        {canShare && (
-          <button
-            type="button"
-            onClick={() => navigator.share({ title: club.name, text: invite }).catch(() => undefined)}
-            className="self-start font-sans text-sm text-primary underline underline-offset-4"
-          >
-            Compartilhar convite
-          </button>
-        )}
+    <header className="stripes relative -mx-5 -mt-12 flex min-h-club-header flex-col items-center justify-end gap-2 px-4 pt-24 pb-4 lg:mx-0 lg:mt-0 lg:rounded-card">
+      <Link
+        to="/clubes"
+        aria-label="Voltar para clubes"
+        className="absolute top-11 left-3.5 flex size-pill-h items-center justify-center rounded-full border border-primary bg-page"
+      >
+        <Icon name="back" className="size-icon-sm" />
+      </Link>
+      <Button
+        variant={copied ? 'primary' : 'outline'}
+        fullWidth={false}
+        onClick={copy}
+        aria-live="polite"
+        className="absolute top-11 right-3.5 min-h-pill-h rounded-full bg-page px-3 text-2xs"
+      >
+        {copied ? 'CÓDIGO COPIADO ✓' : 'COPIAR CÓDIGO'}
+      </Button>
+      <div className="ticket tilt-l2 flex flex-col items-center bg-primary px-8 pt-2 pb-0.5">
+        <span aria-hidden="true" className="font-display text-5xl leading-none text-inverse">Book Club</span>
+        <h1 className="-mt-2 font-script font-normal text-3xl leading-none text-pill">{club.name}</h1>
       </div>
+      <p className="rounded-xs bg-page px-2 py-0.5 font-mono font-bold text-2xs uppercase tracking-label">
+        código <strong className="font-bold">{club.invite_code}</strong>
+      </p>
+      {canShare && (
+        <button
+          type="button"
+          onClick={() => navigator.share({ title: club.name, text: invite }).catch(() => undefined)}
+          className="font-hand text-md text-primary underline underline-offset-4"
+        >
+          Compartilhar convite
+        </button>
+      )}
     </header>
   )
 }
@@ -174,18 +184,18 @@ function FinishButton({ clubBookId, startedOn }: { clubBookId: string; startedOn
   const [confirm, setConfirm] = useState(false)
   return (
     <div className="flex flex-col gap-1">
-      {startedOn && <Label className="text-2xs tracking-normal">desde {formatDateShort(startedOn)}</Label>}
+      {startedOn && <Label className="text-2xs">desde {formatDayMonth(startedOn)}</Label>}
       {confirm ? (
         <span className="flex gap-2">
-          <button type="button" className="font-sans text-sm text-primary underline" onClick={() => finish.mutate(clubBookId)}>
+          <button type="button" className="font-hand text-md text-primary underline" onClick={() => finish.mutate(clubBookId)}>
             {finish.isPending ? 'salvando…' : 'confirmar'}
           </button>
-          <button type="button" className="font-sans text-sm text-primary" onClick={() => setConfirm(false)}>
+          <button type="button" className="font-hand text-md text-primary" onClick={() => setConfirm(false)}>
             cancelar
           </button>
         </span>
       ) : (
-        <button type="button" className="self-start font-sans text-sm text-primary underline" onClick={() => setConfirm(true)}>
+        <button type="button" className="font-hand text-md text-primary underline" onClick={() => setConfirm(true)}>
           concluir leitura
         </button>
       )}
@@ -234,12 +244,12 @@ function ClubSettings({ club }: { club: ClubDetail }) {
           <Button variant="outline" loading={regenerate.isPending} onClick={() => regenerate.mutate()}>
             Gerar novo código
           </Button>
-          <p className="font-sans text-sm text-primary">O código antigo deixa de funcionar; quem já entrou continua no clube.</p>
+          <p className="font-hand text-md">O código antigo deixa de funcionar; quem já entrou continua no clube.</p>
         </>
       )}
       {confirmLeave ? (
         <div className="flex flex-col gap-2">
-          <p className="font-sans text-sm text-primary">
+          <p className="font-hand text-md">
             {isOwner
               ? 'Excluir o clube apaga as prateleiras, propostas e votos de todos. As leituras pessoais continuam.'
               : 'Você sai do clube; suas leituras continuam no seu perfil.'}

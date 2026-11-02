@@ -1,7 +1,7 @@
 import { useId, type InputHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 
 const controlClass =
-  'w-full rounded-card border border-primary bg-card px-4 font-sans text-md text-primary ' +
+  'w-full rounded-sm border border-primary bg-page px-3 font-sans text-md text-primary ' +
   'aria-invalid:border-danger disabled:opacity-60'
 
 type FieldShellProps = {
@@ -15,7 +15,7 @@ type FieldShellProps = {
 function FieldShell({ id, label, hint, error, children }: FieldShellProps) {
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="font-mono text-xs uppercase tracking-label text-primary">
+      <label htmlFor={id} className="font-mono font-bold text-xs uppercase tracking-label text-primary">
         {label}
       </label>
       {children}

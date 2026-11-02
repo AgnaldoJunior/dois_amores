@@ -50,7 +50,7 @@ describe('Sugestão de próxima leitura', () => {
     mocks.suggestNextReads.mockResolvedValue([suggestion])
     mocks.added = { id: 'book-7' }
     renderApp('/meus-livros/sugestoes')
-    expect(await screen.findByText(/Na sua lista "Quero ler"/)).toBeInTheDocument()
+    expect(await screen.findByText(/na lista "Quero ler"/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'ver livro' })).toHaveAttribute('href', '/livros/book-7')
   })
 

@@ -25,6 +25,7 @@ export function buildCssVariables(t: Tokens = defaultTokens): Record<string, str
   for (const [k, v] of Object.entries(t.color)) add('color', k, v)
   for (const [k, v] of Object.entries(t.font)) add('font', k, fontStack(v))
   for (const [k, v] of Object.entries(t.fontSize)) add('text', k, rem(v))
+  for (const [k, v] of Object.entries(t.fontWeight)) add('weight', k, String(v))
   for (const [k, v] of Object.entries(t.lineHeight)) add('leading', k, v)
   for (const [k, v] of Object.entries(t.letterSpacing)) add('tracking', k, v)
   for (const [k, v] of Object.entries(t.space)) add('space', k, rem(v))
@@ -32,6 +33,7 @@ export function buildCssVariables(t: Tokens = defaultTokens): Record<string, str
   for (const [k, v] of Object.entries(t.radius)) add('radius', k, v === 9999 ? '9999px' : rem(v))
   for (const [k, v] of Object.entries(t.borderWidth)) add('border', k, `${v}px`)
   for (const [k, v] of Object.entries(t.shadow)) add('shadow', k, v)
+  for (const [k, v] of Object.entries(t.tilt)) add('tilt', k, `${v}deg`)
   for (const [k, v] of Object.entries(t.blur)) add('blur', k, `${v}px`)
   for (const [k, v] of Object.entries(t.duration)) add('duration', k, v)
 

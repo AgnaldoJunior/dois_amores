@@ -56,14 +56,14 @@ export function ProposePage() {
           <div className="flex gap-3">
             <BookCover title={selected.title} url={selected.coverId ? coverUrl(selected.coverId, 'M') : null} size="sm" decorative />
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-              <h2 className="font-display text-title-sm uppercase leading-none text-primary">{selected.title}</h2>
-              {selected.author && <p className="font-mono text-xs text-primary">{selected.author}</p>}
+              <h2 className="font-type font-normal text-md leading-tight text-primary">{selected.title}</h2>
+              {selected.author && <p className="font-hand text-md leading-none text-primary">{selected.author}</p>}
             </div>
           </div>
-          <Button onClick={onPropose} loading={propose.isPending} className="text-base">
+          <Button onClick={onPropose} loading={propose.isPending}>
             PROPOR AO CLUBE
           </Button>
-          <button type="button" onClick={() => setSelected(null)} className="self-start font-sans text-sm text-primary underline underline-offset-4">
+          <button type="button" onClick={() => setSelected(null)} className="self-start font-hand text-md text-primary underline underline-offset-4">
             Escolher outro livro
           </button>
         </Card>
@@ -71,7 +71,7 @@ export function ProposePage() {
         <BookSearch onSelect={setSelected} />
       )}
       {error && <FormMessage tone="error">{error}</FormMessage>}
-      <p className="font-sans text-sm text-primary">
+      <p className="font-hand text-md text-primary">
         Você já aprova o livro ao propor. Ele entra no clube quando todos os membros aprovarem; uma recusa descarta a proposta.
       </p>
 
@@ -90,7 +90,7 @@ export function ProposePage() {
         </section>
       )}
 
-      <Link to={clubPath(clubId)} className="self-center font-sans text-sm text-primary underline underline-offset-4">
+      <Link to={clubPath(clubId)} className="self-center font-hand text-md text-primary underline underline-offset-4">
         Voltar para o clube
       </Link>
     </div>

@@ -78,7 +78,7 @@ export function MagazinePage() {
       <PageTitle>Exportar revista</PageTitle>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 font-mono text-xs uppercase tracking-label text-primary">Template</legend>
+        <legend className="mb-2 font-mono font-bold text-xs uppercase tracking-label text-primary">Template</legend>
         <div className="grid grid-cols-2 gap-3">
           {templates.map((t) => (
             <label
@@ -97,7 +97,7 @@ export function MagazinePage() {
                 className="sr-only"
               />
               <span className="font-script text-3xl leading-tight text-primary">{t.name}</span>
-              <span className="font-sans text-sm text-primary">{t.description}</span>
+              <span className="font-hand text-md text-primary">{t.description}</span>
               {t.id === templateId && <span className="font-hand text-lg text-primary">✓ selecionado</span>}
             </label>
           ))}
@@ -121,22 +121,22 @@ export function MagazinePage() {
         />
       </div>
       {invalidPeriod && <FormMessage tone="error">O início do período precisa ser antes do fim.</FormMessage>}
-      <p className="font-sans text-sm text-primary">
+      <p className="font-hand text-md text-primary">
         {editions === 0
           ? 'O clube ainda não tem edições concluídas: a revista terá a capa, o Book Track e as leituras de cada membro.'
           : `Período: ${periodLabel(period)}.`}
       </p>
 
-      <Button onClick={onGenerate} loading={busy} disabled={invalidPeriod} className="text-base">
+      <Button onClick={onGenerate} loading={busy} disabled={invalidPeriod}>
         GERAR PDF
       </Button>
       {status !== 'idle' && (
-        <p role="status" className={`font-sans text-sm ${status === 'error' ? 'text-danger' : 'text-primary'}`}>
+        <p role="status" className={`font-hand text-md ${status === 'error' ? 'text-danger' : 'text-primary'}`}>
           {STATUS_TEXT[status]}
         </p>
       )}
       {pdfUrl && (
-        <a href={pdfUrl} target="_blank" rel="noreferrer" className="self-start font-sans text-sm text-primary underline underline-offset-4">
+        <a href={pdfUrl} target="_blank" rel="noreferrer" className="self-start font-hand text-md text-primary underline underline-offset-4">
           Abrir a revista (PDF)
         </a>
       )}
@@ -144,7 +144,7 @@ export function MagazinePage() {
       <Label>Pré-visualização · página 1</Label>
       <CoverPreview clubName={source.club.name} period={periodLabel(period)} />
 
-      <Link to={clubPath(clubId)} className="self-center font-sans text-sm text-primary underline underline-offset-4">
+      <Link to={clubPath(clubId)} className="self-center font-hand text-md text-primary underline underline-offset-4">
         Voltar para o clube
       </Link>
     </div>

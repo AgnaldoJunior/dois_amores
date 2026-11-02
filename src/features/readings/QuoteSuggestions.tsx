@@ -23,8 +23,7 @@ export function QuoteSuggestions({ bookId, onUse }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <Button
-        variant="outline"
-        className="text-base"
+        variant="secondary"
         disabled={!bookId}
         loading={suggest.isPending}
         onClick={() => bookId && suggest.mutate(bookId)}
@@ -38,7 +37,7 @@ export function QuoteSuggestions({ bookId, onUse }: Props) {
         <section aria-label="Citações sugeridas pela IA" className="flex flex-col gap-2">
           <p className="font-hand text-lg text-accentStrong">{AI_DISCLAIMER}</p>
           {suggest.data.length === 0 ? (
-            <p className="font-sans text-sm text-primary">
+            <p className="font-hand text-md text-primary">
               A IA não encontrou citações com segurança para este livro. Que tal escrever a sua?
             </p>
           ) : (

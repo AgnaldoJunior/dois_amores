@@ -46,7 +46,7 @@ describe('navegação principal', () => {
 
   it('a tela inicial cumprimenta pelo primeiro nome e mostra as estatísticas', () => {
     renderApp('/')
-    expect(screen.getByText('Olá, Leyna')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Olá, Leyna!' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Abrir meu perfil' })).toHaveAttribute('href', '/perfil')
     expect(screen.getByText('Livros lidos')).toBeInTheDocument()
     expect(screen.getByText('12')).toBeInTheDocument()
@@ -56,7 +56,7 @@ describe('navegação principal', () => {
 
   it('a tela inicial lista as leituras recentes com link para a página do livro', () => {
     renderApp('/')
-    const link = screen.getByRole('link', { name: /Três · Valérie Perrin/ })
+    const link = screen.getByRole('link', { name: /^Três/ })
     expect(link).toHaveAttribute('href', '/livros/b1')
     expect(screen.getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
   })
