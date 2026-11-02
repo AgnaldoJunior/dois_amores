@@ -7,16 +7,21 @@ iPhone pelo Safari) e no computador.
 **Funcionalidades**
 
 - **Conta:** e-mail e senha (com confirmação e recuperação), login com Google, foto de
-  perfil (do Google ou enviada, redimensionada para 512×512 e sem metadados EXIF), exclusão
-  de conta.
-- **Início:** livros lidos, páginas lidas, clubes e leituras recentes.
+  perfil (do Google ou enviada, redimensionada para 512×512 e sem metadados EXIF) ou **avatar
+  ilustrado** montado no app (pele, cabelo, óculos, roupa, extras e bichinho), exclusão de conta.
+- **Perfil:** números do ano, livros lidos fora do clube e "Minhas escolhas" (livros que a
+  pessoa propôs e o clube aprovou).
+- **Início:** livros lidos, páginas lidas, clubes, "Lendo agora" com barra de progresso, o livro
+  que o clube está lendo e leituras recentes.
 - **Feed:** quem terminou qual livro, com capa, nota média, data e comentário.
 - **Publicar leitura:** busca com autocomplete (Open Library, 5 sugestões, teclado), datas,
   4 notas em estrelas, personagem favorito, citação (com "Sugerir com IA") e comentário.
 - **Meus livros:** prateleiras Lidos, Em andamento e Quero ler; página do livro com sinopse em
   português; "Sugestão de próxima leitura" com IA (livros confirmados na Open Library).
 - **Clubes:** criar (com capa), entrar por código, membros e seus dados literários, propor
-  livros com aprovação unânime, prateleiras do clube, sugestão do clube com IA e
+  livros com aprovação unânime e voto de cada membro à vista, fila de "Próximas" leituras,
+  "Book Review" de cada livro com a ficha de cada membro, "Os mais amados", ranking do ano com
+  pódio e prêmios, favoritos das estantes (sem IA), sugestão do clube com IA e
   **exportação da revista em PDF**.
 
 ## Sumário
@@ -206,27 +211,33 @@ Migrações versionadas em [supabase/migrations](supabase/migrations), com RLS e
 
 | Tabela | Conteúdo | Quem lê | Quem escreve |
 |---|---|---|---|
-| `profiles` | nome, avatar, bio (criado no cadastro) | autenticados | o próprio usuário |
+| `profiles` | nome, foto, bio, bichinho, avatar ilustrado (`avatar_mode`, `avatar_config`) | autenticados | o próprio usuário |
 | `books` | catálogo (Open Library + Google Books) | autenticados | RPC `upsert_book`; Edge Function `books` |
-| `user_books` | leitura: datas, 4 notas (1–5), favorito, citação, comentário | autenticados | o próprio usuário |
+| `user_books` | leitura: datas, página atual, 4 notas (1–5), favorito, citação, comentário | autenticados | o próprio usuário |
 | `posts` | feed (criado/removido por trigger ao preencher/apagar a data de fim) | autenticados | trigger |
 | `reading_list` | "Quero ler" | o próprio usuário | o próprio usuário |
 | `clubs` | nome, capa, código de convite | membros | dona (nome/capa); RPCs |
 | `club_members` | membros e papel (`owner`/`member`) | membros | RPCs; sair; dona remove |
-| `club_books` | `pending → reading → finished` ou `rejected`, nº da edição | membros | RPCs |
+| `club_books` | `pending → reading` (ou `queued` na fila) `→ finished`, ou `rejected`; nº da edição | membros | RPCs |
 | `club_book_votes` | votos de aprovação | membros | o próprio membro, enquanto pendente |
 | `ai_usage` | chamadas de IA por pessoa e dia | o próprio usuário | Edge Function `ai` |
 
 **Aprovação de livros do clube:** votam os membros que já estavam no clube quando o livro foi
 proposto; quem propõe já aprova; uma reprovação rejeita; quando todos aprovam, o livro entra em
-leitura. A regra existe em SQL (`evaluate_club_book`) e em TypeScript
-([src/lib/domain/clubApproval.ts](src/lib/domain/clubApproval.ts)).
+leitura — ou na fila (`queued`), se outro livro já estiver em leitura. Ao concluir a leitura
+atual (`finish_club_book`), o mais antigo da fila começa no mesmo dia. A regra existe em SQL
+(`evaluate_club_book`) e em TypeScript ([src/lib/domain/clubApproval.ts](src/lib/domain/clubApproval.ts)).
+
+**Ranking e prêmios** ([src/lib/domain/ranking.ts](src/lib/domain/ranking.ts)): livros terminados
+no ano ou média das estrelas; maratonista (mais livros fora do clube), mão aberta (mais 5★ em
+livros do clube) e crítica oficial (menor média nos livros do clube).
 
 **Storage:** `avatars/<user_id>/…` (cada um na própria pasta), `club-covers/<club_id>/…` (só a
 dona do clube) e `covers/<book_id>.jpg` (só as Edge Functions). Todos públicos para leitura.
 
 **Dados de exemplo** ([supabase/seed.sql](supabase/seed.sql), só local): clube "Dois Amores",
-Leyna, Irla, Wanessa e Thaís, edições de maio a outubro de 2026 e uma proposta pendente.
+Leyna, Irla, Wanessa e Thaís (com bichinhos e avatares ilustrados), edições de maio a outubro
+de 2026, leituras em andamento com progresso e uma proposta pendente.
 
 ## Dados dos livros
 
@@ -284,6 +295,14 @@ valores em `templates/revista/<id>/tokens.json`.
 Para trocar a identidade visual: edite `tokens.ts`, substitua `public/logo.svg` e as fontes em
 `public/fonts/` (TTF, usadas pela interface e pelo PDF) e rode `npm run icons`.
 
+Estilo "scrapbook": verde `#0B5130`, creme, papel kraft e rosa; Bebas Neue (números), Pinyon
+Script (títulos), Courier Prime em negrito (rótulos e botões), Special Elite (títulos de livros),
+Shadows Into Light Two (texto manuscrito) e Inter nos campos de formulário e sinopses. Selos,
+ingressos, listras e tábuas de estante são classes em [src/index.css](src/index.css) feitas só
+com as variáveis dos tokens. O avatar ilustrado é desenhado por
+[src/lib/avatar/shapes.ts](src/lib/avatar/shapes.ts): a mesma lista de formas vira SVG no app e
+PNG na revista.
+
 ## Estrutura de pastas
 
 ```
@@ -322,7 +341,9 @@ supabase/templates/  e-mails de autenticação em português
 | 3 abas | 4 abas (Início, Feed, Meus livros, Clubes) | a tela inicial do Figma não tinha como ser acessada |
 | — | lista "Quero ler" | o Figma tem "Adicionar à lista" nas sugestões |
 | "Enquanto isso": uma página por membro | dois membros por página (configurável em `tokens.json`) | igual à revista de referência |
-| Rosa `#F28CA5` nas abas inativas | rosa escurecido `#B03A5E` | contraste de 2:1 → 4,7:1 (WCAG AA); o rosa original segue no logotipo e nas estrelas |
+| Rosa dos títulos `#C9506F` | só em texto grande (títulos cursivos ≥ 24px) | contraste de 4:1 sobre o creme: passa no AA para texto grande; textos pequenos usam `#B03F5E` (5,3:1) |
+| Meus livros com recorte borrado da capa | capas reais de pé sobre tábuas de madeira | segue o redesenho "scrapbook" |
+| Abas início · clube · ranking · perfil | início · feed · livros · clubes; ranking pela página do clube e pelo início; perfil pelo avatar | o app tem vários clubes e o feed |
 | Domínio próprio | `*.vercel.app` | projeto 100% gratuito |
 
 ## Solução de problemas

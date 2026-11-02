@@ -16,6 +16,7 @@ import { HomePage } from '@/features/home/HomePage'
 import { PrivacyPage } from '@/features/legal/PrivacyPage'
 import { MagazinePage } from '@/features/magazine/MagazinePage'
 import { PlaceholderPage } from '@/features/placeholder/PlaceholderPage'
+import { AvatarBuilderPage } from '@/features/profile/AvatarBuilderPage'
 import { ProfileOverviewPage } from '@/features/profile/ProfileOverviewPage'
 import { ProfileEditPage } from '@/features/profile/ProfilePage'
 import { ReadingFormPage } from '@/features/readings/ReadingFormPage'
@@ -55,6 +56,7 @@ export const routes: RouteObject[] = [
           { path: 'leituras/:id/editar', element: <ReadingFormPage /> },
           { path: 'perfil', element: <ProfileOverviewPage /> },
           { path: 'perfil/editar', element: <ProfileEditPage /> },
+          { path: 'perfil/avatar', element: <AvatarBuilderPage /> },
           {
             path: '*',
             element: <PlaceholderPage title="Página não encontrada" message="Esta página se perdeu na estante." />,

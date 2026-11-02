@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useParams } from 'react-router'
-import { Avatar, type AvatarSize } from '@/components/ui/Avatar'
+import { Avatar, avatarOf, type AvatarSize } from '@/components/ui/Avatar'
 import { BackLink } from '@/components/ui/BackLink'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { SectionTitle } from '@/components/ui/Typography'
@@ -78,7 +78,7 @@ export function RankingPage() {
           const member = memberOf(row.userId)
           return (
             <li key={row.userId} className="flex flex-col items-center gap-1">
-              <Avatar name={member.profile.name} url={member.profile.avatar_url} size={place.avatar} />
+              <Avatar {...avatarOf(member.profile)} size={place.avatar} />
               <span className="rounded-sm bg-stripeLight px-1.5 font-script text-2xl leading-none">{firstName(member.profile.name)}</span>
               <div className={`flex w-full flex-col items-center rounded-t-card bg-primary pt-2 text-inverse ${place.bar}`}>
                 <span className="font-display text-3xl leading-none">{show(row)}</span>
@@ -96,7 +96,7 @@ export function RankingPage() {
             return (
               <li key={row.userId} className="flex items-center gap-3 rounded-card border border-primary bg-card px-3 py-2">
                 <span className="w-5 font-display text-2xl text-accentStrong">{row.position}</span>
-                <Avatar name={member.profile.name} url={member.profile.avatar_url} size="xs" />
+                <Avatar {...avatarOf(member.profile)} size="xs" />
                 <span className="flex-1 font-script text-title-md leading-none">{firstName(member.profile.name)}</span>
                 <span className="font-display text-2xl">{show(row)}</span>
               </li>
@@ -129,7 +129,7 @@ function AwardCard({ title, member, children }: { title: string; member: ClubMem
   return (
     <li className="flex flex-col items-center gap-1 rounded-card border border-primary bg-card px-1.5 py-2.5 text-center">
       {member ? (
-        <Avatar name={member.profile.name} url={member.profile.avatar_url} size="xs" />
+        <Avatar {...avatarOf(member.profile)} size="xs" />
       ) : (
         <span aria-hidden="true" className="size-avatar-xs rounded-full border border-dashed border-slot" />
       )}

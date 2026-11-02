@@ -1,3 +1,6 @@
+import { IllustratedAvatar } from '@/components/IllustratedAvatar'
+import { illustrationOf, type AvatarConfig } from '@/lib/avatar/config'
+
 const sizeClass = {
   xs: 'size-avatar-xs text-lg',
   sm: 'size-avatar-sm text-xl',
@@ -17,12 +20,30 @@ type AvatarProps = {
   className?: string
   /** Contorno verde: grosso (padrão) ou fino, para avatares pequenos dentro de botões. */
   border?: 'thick' | 'thin'
+  /** Avatar ilustrado escolhido no criador (tem prioridade sobre a foto). */
+  illustration?: AvatarConfig | null
 }
 
-/** Foto do perfil num círculo com contorno verde ou, sem foto, a inicial sobre o rosa. */
-export function Avatar({ name, url, size = 'md', className = '', border = 'thick' }: AvatarProps) {
+type ProfileLike = { name: string; avatar_url?: string | null; avatar_mode?: string | null; avatar_config?: unknown }
+
+/** Props do Avatar a partir de um perfil: nome, foto e, se escolhido, o avatar ilustrado. */
+export const avatarOf = (profile: ProfileLike) => ({
+  name: profile.name,
+  url: profile.avatar_url ?? null,
+  illustration: illustrationOf(profile),
+})
+
+/** Avatar ilustrado, foto ou, sem nenhum dos dois, a inicial sobre o rosa — num círculo com contorno verde. */
+export function Avatar({ name, url, size = 'md', className = '', border = 'thick', illustration }: AvatarProps) {
   const initial = name.trim().charAt(0).toUpperCase() || '?'
   const base = `${sizeClass[size]} shrink-0 rounded-full ${border === 'thick' ? 'border-thick' : 'border-thin'} border-primary overflow-hidden`
+  if (illustration) {
+    return (
+      <span aria-hidden="true" className={`${base} inline-flex bg-page ${className}`}>
+        <IllustratedAvatar config={illustration} className="size-full" />
+      </span>
+    )
+  }
   return url ? (
     <img src={url} alt="" referrerPolicy="no-referrer" className={`${base} object-cover bg-page ${className}`} />
   ) : (

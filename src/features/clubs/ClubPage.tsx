@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
-import { Avatar } from '@/components/ui/Avatar'
+import { Avatar, avatarOf } from '@/components/ui/Avatar'
 import { Button, ButtonLink, buttonClass } from '@/components/ui/Button'
 import { BookCover } from '@/components/ui/BookCover'
 import { Card } from '@/components/ui/Card'
@@ -59,7 +59,7 @@ export function ClubPage() {
             aria-label={`${m.profile.name}${m.role === 'owner' ? ' (criou o clube)' : ''}`}
             className="flex min-w-15 flex-col items-center gap-0.5 no-underline"
           >
-            <Avatar name={m.profile.name} url={m.profile.avatar_url} size="md" />
+            <Avatar {...avatarOf(m.profile)} size="md" />
             <span className="font-hand text-base leading-none">{withPet(m.profile.name.split(/\s+/)[0]!, m.profile.pet)}</span>
           </Link>
         ))}

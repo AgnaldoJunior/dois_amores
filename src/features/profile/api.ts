@@ -3,9 +3,9 @@ import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { supabase, type Tables } from '@/lib/supabase'
 import { resizeAvatar } from './imageResize'
 
-export type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'avatar_url' | 'bio' | 'pet'>
+export type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'avatar_url' | 'bio' | 'pet' | 'avatar_mode' | 'avatar_config'>
 
-const PROFILE_FIELDS = 'id, name, avatar_url, bio, pet'
+const PROFILE_FIELDS = 'id, name, avatar_url, bio, pet, avatar_mode, avatar_config'
 
 export const profileKeys = {
   detail: (userId: string) => ['profile', userId] as const,
@@ -31,7 +31,7 @@ export function useUpdateProfile() {
   const user = useCurrentUser()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (changes: Partial<Pick<Profile, 'name' | 'bio' | 'avatar_url' | 'pet'>>) => {
+    mutationFn: async (changes: Partial<Pick<Profile, 'name' | 'bio' | 'avatar_url' | 'pet' | 'avatar_mode' | 'avatar_config'>>) => {
       const { data, error } = await supabase
         .from('profiles')
         .update(changes)
@@ -61,7 +61,8 @@ export function useUploadAvatar() {
       if (error) throw error
       const { data } = supabase.storage.from('avatars').getPublicUrl(path)
       // Parâmetro de versão para o navegador não mostrar a foto antiga em cache.
-      return update.mutateAsync({ avatar_url: `${data.publicUrl}?v=${Date.now()}` })
+      // Quem envia uma foto quer vê-la: volta do avatar ilustrado para a foto.
+      return update.mutateAsync({ avatar_url: `${data.publicUrl}?v=${Date.now()}`, avatar_mode: 'photo' })
     },
   })
 }

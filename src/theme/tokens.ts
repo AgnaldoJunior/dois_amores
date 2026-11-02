@@ -274,6 +274,41 @@ export const tokens = {
     base: '200ms',
   },
 
+  /**
+   * Cores do avatar ilustrado (SVG desenhado no app e rasterizado para a revista).
+   * Opções na ordem em que aparecem no criador de avatar.
+   */
+  avatar: {
+    skin: [
+      { fill: '#F6D2BE', shade: '#E9B39C', label: 'pele clara' },
+      { fill: '#EDB596', shade: '#D99878', label: 'pele média clara' },
+      { fill: '#C98E6B', shade: '#B07655', label: 'pele média' },
+      { fill: '#8D5A3E', shade: '#744631', label: 'pele escura' },
+    ],
+    hair: [
+      { fill: '#2A1A14', label: 'preto' },
+      { fill: '#5A3122', label: 'castanho' },
+      { fill: '#B8340E', label: 'ruivo' },
+      { fill: '#E3B562', label: 'loiro' },
+      { fill: palette.pinkAvatar, label: 'rosa' },
+      { fill: palette.green, label: 'verde' },
+    ],
+    shirt: [
+      { fill: palette.green, label: 'verde' },
+      { fill: palette.pinkAvatar, label: 'rosa' },
+      { fill: palette.kraft, label: 'kraft' },
+      { fill: '#2A1A14', label: 'preto' },
+    ],
+    paper: '#FDFBF3',
+    eye: '#2A1A14',
+    mouth: '#7A3A2E',
+    frame: '#3A2A22',
+    blush: palette.pinkAvatar,
+    bow: palette.pinkAvatar,
+    bowLine: palette.pinkTitle,
+    accent: palette.green,
+  },
+
   /** px — larguras mínimas dos breakpoints (mobile first) */
   breakpoint: {
     sm: 560,

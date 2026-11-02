@@ -1,5 +1,5 @@
 import { useParams } from 'react-router'
-import { Avatar } from '@/components/ui/Avatar'
+import { Avatar, avatarOf } from '@/components/ui/Avatar'
 import { BackLink } from '@/components/ui/BackLink'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormMessage } from '@/components/ui/FormMessage'
@@ -35,7 +35,7 @@ export function MemberPage() {
     <div className="flex flex-col gap-4">
       <BackLink to={clubPath(clubId)}>clube</BackLink>
       <header className="flex items-center gap-4">
-        <Avatar name={data.profile.name} url={data.profile.avatar_url} size="lg" />
+        <Avatar {...avatarOf(data.profile)} size="lg" />
         <div className="flex min-w-0 flex-col">
           <h1 className="font-script font-normal text-5xl leading-none text-title">
             {data.profile.name}

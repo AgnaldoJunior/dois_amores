@@ -45,7 +45,14 @@ pet = case name
   when 'Irla'    then '🐭'
   when 'Wanessa' then '🐈‍⬛'
   when 'Thaís'   then '🦒'
-end;
+end,
+avatar_mode = 'illustrated',
+avatar_config = case name
+  when 'Leyna'   then '{"skin": 0, "hair": 0, "style": "long",  "glasses": "round",  "shirt": 0, "extras": "stars"}'
+  when 'Irla'    then '{"skin": 1, "hair": 2, "style": "bob",   "glasses": "square", "shirt": 1, "extras": "bow"}'
+  when 'Wanessa' then '{"skin": 2, "hair": 1, "style": "wavy",  "glasses": "none",   "shirt": 2, "extras": "none"}'
+  when 'Thaís'   then '{"skin": 3, "hair": 0, "style": "bun",   "glasses": "cat",    "shirt": 3, "extras": "both"}'
+end::jsonb;
 
 -- Livros (Open Library) -------------------------------------------------------
 insert into public.books (id, openlibrary_work_key, title, author, pages, cover_url) values

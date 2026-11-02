@@ -80,3 +80,42 @@ describe('editar perfil', () => {
     expect(update).toHaveBeenCalledWith({ name: 'Leyna', bio: 'Lê de tudo.', pet: '🦊' })
   })
 })
+
+describe('criador de avatar', () => {
+  it('monta o avatar pelas abas e salva como avatar ilustrado', async () => {
+    update.mockResolvedValue(undefined)
+    const { router } = renderApp('/perfil/avatar')
+    expect(screen.getByRole('img', { name: 'Prévia do seu avatar' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('tab', { name: 'pele' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'pele escura' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'cabelo' }))
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('qual é o penteado?')
+    await userEvent.click(screen.getByRole('radio', { name: /coque/ }))
+    await userEvent.click(screen.getByRole('tab', { name: 'óculos' }))
+    await userEvent.click(screen.getByRole('radio', { name: /gatinho/ }))
+    await userEvent.click(screen.getByRole('tab', { name: 'bichinho' }))
+    await userEvent.click(screen.getByRole('radio', { name: /sapinho/ }))
+
+    const name = screen.getByRole('textbox', { name: 'Nome no clube' })
+    await userEvent.clear(name)
+    await userEvent.type(name, 'Ley')
+    await userEvent.click(screen.getByRole('button', { name: 'Pronta!' }))
+    expect(update).toHaveBeenCalledWith({
+      name: 'Ley',
+      pet: '🐸',
+      avatar_mode: 'illustrated',
+      avatar_config: { skin: 3, hair: 1, style: 'bun', glasses: 'cat', shirt: 0, extras: 'none' },
+    })
+    expect(router.state.location.pathname).toBe('/perfil')
+  })
+
+  it('o dado sorteia uma combinação nova', async () => {
+    renderApp('/perfil/avatar')
+    const before = screen.getByRole('img', { name: 'Prévia do seu avatar' }).innerHTML
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    await userEvent.click(screen.getByRole('button', { name: 'sortear' }))
+    expect(screen.getByRole('img', { name: 'Prévia do seu avatar' }).innerHTML).not.toBe(before)
+    vi.restoreAllMocks()
+  })
+})

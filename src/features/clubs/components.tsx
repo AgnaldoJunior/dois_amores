@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Avatar } from '@/components/ui/Avatar'
+import { Avatar, avatarOf } from '@/components/ui/Avatar'
 import { BookCover } from '@/components/ui/BookCover'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -83,7 +83,7 @@ export function ProposalCard({ clubBook, members }: { clubBook: ClubBook; member
                   (v?.approved ? 'bg-primary text-inverse' : 'bg-page')
                 }
               >
-                <Avatar name={m.profile.name} url={m.profile.avatar_url} size="xs" border="thin" />
+                <Avatar {...avatarOf(m.profile)} size="xs" border="thin" />
                 <span>{m.profile.name.split(/\s+/)[0]}</span>
                 <span aria-hidden="true" className="font-mono font-bold">{mark}</span>
                 <span className="sr-only">{label}</span>

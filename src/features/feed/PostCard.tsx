@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { Avatar } from '@/components/ui/Avatar'
+import { Avatar, avatarOf } from '@/components/ui/Avatar'
 import { BookCover } from '@/components/ui/BookCover'
 import { Stars } from '@/components/ui/Stars'
 import { formatDayMonth } from '@/lib/dates'
@@ -18,7 +18,7 @@ export function PostCard({ post }: { post: FeedPost }) {
   return (
     <article className="flex flex-col gap-2 rounded-card border border-primary bg-card p-3">
       <div className="flex items-center gap-2.5">
-        <Avatar name={name} url={post.author?.avatar_url} size="xs" />
+        <Avatar {...(post.author ? avatarOf(post.author) : { name })} size="xs" />
         <p className="min-w-0 flex-1 truncate font-script text-title-md leading-tight" title={name}>
           {firstName}
         </p>

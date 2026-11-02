@@ -6,13 +6,16 @@ import type { ClubBookStatus, ReadingLike } from '@/lib/domain/clubs'
 import { normalizeInviteCode } from '@/lib/domain/clubs'
 import { supabase } from '@/lib/supabase'
 
+/** Campos do avatar ilustrado (ver src/lib/avatar/config.ts). */
+export type AvatarFields = { avatar_mode?: string | null; avatar_config?: unknown }
+
 export type ClubSummary = { id: string; name: string; cover_url: string | null; memberCount: number }
 
 export type ClubMember = {
   user_id: string
   role: 'owner' | 'member'
   joined_at: string
-  profile: { id: string; name: string; avatar_url: string | null; pet: string | null }
+  profile: { id: string; name: string; avatar_url: string | null; pet: string | null } & AvatarFields
 }
 
 export type ClubBook = {
@@ -95,7 +98,7 @@ export function useClub(clubId: string) {
         .from('clubs')
         .select(
           `id, name, cover_url, invite_code, created_by,
-           members:club_members(user_id, role, joined_at, profile:profiles(id, name, avatar_url, pet)),
+           members:club_members(user_id, role, joined_at, profile:profiles(id, name, avatar_url, pet, avatar_mode, avatar_config)),
            books:club_books(id, status, started_on, finished_on, edition_number, created_at, queued_at, proposed_by,
              book:books(id, title, author, cover_url, pages, enriched_at),
              votes:club_book_votes(user_id, approved))`,
@@ -123,7 +126,7 @@ export function useClub(clubId: string) {
 }
 
 export type MemberProfile = {
-  profile: { id: string; name: string; avatar_url: string | null; bio: string | null; pet: string | null }
+  profile: { id: string; name: string; avatar_url: string | null; bio: string | null; pet: string | null } & AvatarFields
   readings: (ReadingLike & { book: { id: string; title: string; cover_url: string | null; enriched_at?: string | null } })[]
 }
 
@@ -133,7 +136,7 @@ export function useMemberProfile(userId: string) {
     queryKey: clubKeys.member(userId),
     queryFn: async (): Promise<MemberProfile> => {
       const [profile, readings] = await Promise.all([
-        supabase.from('profiles').select('id, name, avatar_url, bio, pet').eq('id', userId).single(),
+        supabase.from('profiles').select('id, name, avatar_url, bio, pet, avatar_mode, avatar_config').eq('id', userId).single(),
         supabase
           .from('user_books')
           .select(`user_id, book_id, started_on, finished_on, ${RANKS}, book:books(id, title, cover_url, pages, enriched_at)`)

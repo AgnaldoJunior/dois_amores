@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { Avatar } from '@/components/ui/Avatar'
+import { Avatar, avatarOf } from '@/components/ui/Avatar'
 import { ButtonLink } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Icon } from '@/components/ui/Icon'
@@ -34,7 +34,7 @@ export function ProfileOverviewPage() {
   return (
     <div className="flex flex-col gap-4">
       <header className="flex items-center gap-4">
-        <Avatar name={profile?.name ?? ''} url={profile?.avatar_url} size="lg" />
+        <Avatar {...avatarOf(profile ?? { name: '' })} size="lg" />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h1 className="font-script font-normal text-5xl leading-none text-title">
             {profile?.name}
@@ -47,10 +47,16 @@ export function ProfileOverviewPage() {
         </div>
       </header>
 
-      <ButtonLink to="/perfil/editar" variant="outline">
-        <Icon name="person" className="size-icon-sm" />
-        Editar perfil
-      </ButtonLink>
+      <div className="grid grid-cols-2 gap-2">
+        <ButtonLink to="/perfil/editar" variant="outline">
+          <Icon name="person" className="size-icon-sm" />
+          Editar perfil
+        </ButtonLink>
+        <ButtonLink to="/perfil/avatar" variant="secondary">
+          <Icon name="sparkle" className="size-icon-sm" />
+          Criar avatar
+        </ButtonLink>
+      </div>
 
       <StatTiles
         label={`Seus números em ${year}`}

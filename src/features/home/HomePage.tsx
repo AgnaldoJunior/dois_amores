@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router'
-import { Avatar } from '@/components/ui/Avatar'
+import { Avatar, avatarOf } from '@/components/ui/Avatar'
 import { ButtonLink } from '@/components/ui/Button'
 import { BookCover } from '@/components/ui/BookCover'
 import { Icon } from '@/components/ui/Icon'
@@ -115,7 +115,7 @@ export function HomePage() {
           <h1 className="font-hand font-normal text-4xl leading-tight">{firstName ? `Olá, ${firstName}!` : 'Olá!'}</h1>
         </div>
         <Link to="/perfil" aria-label="Abrir meu perfil" className="rounded-full">
-          <Avatar name={profile?.name ?? ''} url={profile?.avatar_url} size="md" />
+          <Avatar {...avatarOf(profile ?? { name: '' })} size="md" />
         </Link>
       </header>
 

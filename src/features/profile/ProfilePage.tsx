@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Avatar } from '@/components/ui/Avatar'
+import { Avatar, avatarOf } from '@/components/ui/Avatar'
 import { BackLink } from '@/components/ui/BackLink'
 import { Button, buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -88,7 +88,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
       </div>
 
       <div className="flex flex-col items-center gap-3">
-        <Avatar name={profile.name} url={profile.avatar_url} size="lg" />
+        <Avatar {...avatarOf(profile)} size="lg" />
         <label className={buttonClass('outline', false, 'cursor-pointer focus-within:outline focus-within:outline-primary')}>
           {upload.isPending ? 'Enviando…' : profile.avatar_url ? 'Trocar foto' : 'Adicionar foto'}
           <input

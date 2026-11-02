@@ -1,4 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
+import { illustrationOf } from '@/lib/avatar/config'
+import { svgToPng } from '@/lib/avatar/rasterize'
+import { avatarSvg } from '@/lib/avatar/shapes'
 import { supabase } from '@/lib/supabase'
 import type { MagazineSource } from './buildMagazineData'
 
@@ -10,7 +13,7 @@ export async function fetchMagazineSource(clubId: string): Promise<MagazineSourc
     .from('clubs')
     .select(
       `name, cover_url,
-       members:club_members(user_id, joined_at, profile:profiles(name, avatar_url)),
+       members:club_members(user_id, joined_at, profile:profiles(name, avatar_url, avatar_mode, avatar_config)),
        clubBooks:club_books(status, started_on, finished_on, edition_number, book:books(${BOOK}))`,
     )
     .eq('id', clubId)
@@ -30,10 +33,26 @@ export async function fetchMagazineSource(clubId: string): Promise<MagazineSourc
 
   return {
     club: { name: source.name, cover_url: source.cover_url },
-    members: source.members,
+    members: await resolveAvatars(source.members),
     clubBooks: source.clubBooks,
     readings: readings as unknown as MagazineSource['readings'],
   }
+}
+
+type MemberWithAvatar = {
+  profile: { name: string; avatar_url: string | null; avatar_mode?: string | null; avatar_config?: unknown }
+}
+
+/** Quem escolheu o avatar ilustrado aparece na revista com ele (rasterizado em PNG). */
+export async function resolveAvatars<M extends MemberWithAvatar>(members: M[], rasterize = svgToPng): Promise<M[]> {
+  return Promise.all(
+    members.map(async (m) => {
+      const config = illustrationOf(m.profile)
+      if (!config) return m
+      const avatar_url = await rasterize(avatarSvg(config)).catch(() => m.profile.avatar_url)
+      return { ...m, profile: { ...m.profile, avatar_url } }
+    }),
+  )
 }
 
 export function useMagazineSource(clubId: string) {

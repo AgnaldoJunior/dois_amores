@@ -7,7 +7,7 @@ export const FEED_PAGE_SIZE = 10
 export type FeedPost = {
   id: string
   created_at: string
-  author: { id: string; name: string; avatar_url: string | null } | null
+  author: { id: string; name: string; avatar_url: string | null; avatar_mode?: string | null; avatar_config?: unknown } | null
   reading:
     | (Ranks & {
         id: string
@@ -19,7 +19,7 @@ export type FeedPost = {
 }
 
 const FEED_FIELDS = `id, created_at,
-  author:profiles!posts_user_id_fkey(id, name, avatar_url),
+  author:profiles!posts_user_id_fkey(id, name, avatar_url, avatar_mode, avatar_config),
   reading:user_books!posts_user_book_id_fkey(id, finished_on, rank_characters, rank_plot, rank_writing, rank_ending,
     comment, book:books(id, title, author, cover_url))`
 

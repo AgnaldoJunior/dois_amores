@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router'
 import { Field, ReviewCard } from '@/components/ReviewCard'
-import { Avatar } from '@/components/ui/Avatar'
+import { Avatar, avatarOf } from '@/components/ui/Avatar'
 import { BackLink } from '@/components/ui/BackLink'
 import { BookCover } from '@/components/ui/BookCover'
 import { ButtonLink } from '@/components/ui/Button'
@@ -95,7 +95,7 @@ function Review({ clubId, clubBook, members, readings, average }: ReviewProps) {
                 (on ? 'bg-primary text-inverse' : 'bg-page text-primary')
               }
             >
-              <Avatar name={m.profile.name} url={m.profile.avatar_url} size="xs" border="thin" />
+              <Avatar {...avatarOf(m.profile)} size="xs" border="thin" />
               <span className="truncate font-hand text-sm">{withPet(firstName(m.profile.name), m.profile.pet)}</span>
             </button>
           )

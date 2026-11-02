@@ -127,6 +127,7 @@ describe('acessibilidade (axe-core)', () => {
     ['editar leitura', '/leituras/r1/editar'],
     ['perfil', '/perfil'],
     ['editar perfil', '/perfil/editar'],
+    ['criar avatar', '/perfil/avatar'],
     ['ranking do clube', '/clubes/c1/ranking'],
     ['book review do clube', '/clubes/c1/livros/cb1'],
     ['clubes', '/clubes'],
