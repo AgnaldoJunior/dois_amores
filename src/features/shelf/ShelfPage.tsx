@@ -7,10 +7,17 @@ import { Label, PageTitle, SectionTitle } from '@/components/ui/Typography'
 import { useBackgroundEnrichment } from '@/lib/books/useBackgroundEnrichment'
 import { formatDayMonth } from '@/lib/dates'
 import { memberAverage } from '@/lib/domain/ratings'
+import { readingProgress } from '@/lib/domain/stats'
+import type { Reading } from '@/features/readings/api'
 import { useShelf } from './api'
 import { ShelfAddSlot, ShelfGrid, ShelfTag, ShelfTile } from './ShelfTile'
 
 export const bookPath = (bookId: string) => `/livros/${bookId}`
+
+const progressTag = (r: Reading) => {
+  const percent = readingProgress(r.current_page, r.book.pages)
+  return percent != null ? `${percent}% lido` : `desde ${formatDayMonth(r.started_on)}`
+}
 
 export function ShelfPage() {
   const { data, isLoading, isError } = useShelf()
@@ -64,7 +71,7 @@ export function ShelfPage() {
                     to={bookPath(r.book.id)}
                     title={r.book.title}
                     coverUrl={r.book.cover_url}
-                    footer={<ShelfTag>desde {formatDayMonth(r.started_on)}</ShelfTag>}
+                    footer={<ShelfTag>{progressTag(r)}</ShelfTag>}
                   />
                 ))}
               </ShelfGrid>

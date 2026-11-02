@@ -1,5 +1,8 @@
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { renderApp } from '@/test/renderApp'
+
+const updateProgress = vi.hoisted(() => vi.fn())
 
 vi.mock('@/features/profile/api', () => ({
   useProfile: () => ({
@@ -8,7 +11,26 @@ vi.mock('@/features/profile/api', () => ({
   }),
 }))
 
+vi.mock('@/features/shelf/api', () => ({
+  useShelf: () => ({
+    data: {
+      read: [],
+      wishlist: [],
+      reading: [
+        {
+          id: 'r9',
+          started_on: '2026-10-10',
+          finished_on: null,
+          current_page: 152,
+          book: { id: 'b9', title: 'A hora da estrela', author: 'Clarice Lispector', pages: 400, cover_url: null },
+        },
+      ],
+    },
+  }),
+}))
+
 vi.mock('@/features/readings/api', () => ({
+  useUpdateProgress: () => ({ mutateAsync: updateProgress, isPending: false }),
   useMyStats: () => ({ data: { booksRead: 12, pagesRead: 3480, clubs: 2 } }),
   useRecentReadings: () => ({
     data: [
@@ -85,6 +107,22 @@ describe('navegação principal', () => {
     expect(ticket).toHaveAttribute('href', '/clubes/c1/livros/cb8')
     expect(ticket).toHaveTextContent('10 minutos e 38 segundos neste mundo estranho')
     expect(screen.getByRole('link', { name: 'ver o ranking do clube' })).toHaveAttribute('href', '/clubes/c1/ranking')
+  })
+
+  it('"lendo agora" mostra o progresso e atualiza a página atual', async () => {
+    renderApp('/')
+    expect(screen.getByRole('progressbar', { name: 'Progresso de A hora da estrela' })).toHaveAttribute('aria-valuenow', '38')
+    expect(screen.getByText('38% lido · pág. 152 de 400')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Atualizar página atual de A hora da estrela' }))
+    const page = screen.getByRole('spinbutton', { name: 'página atual' })
+    await userEvent.clear(page)
+    await userEvent.type(page, '500')
+    await userEvent.click(screen.getByRole('button', { name: 'salvar' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Informe uma página entre 0 e 400.')
+    await userEvent.clear(page)
+    await userEvent.type(page, '200')
+    await userEvent.click(screen.getByRole('button', { name: 'salvar' }))
+    expect(updateProgress).toHaveBeenCalledWith({ id: 'r9', page: 200 })
   })
 
   it('rota desconhecida mostra página não encontrada', () => {

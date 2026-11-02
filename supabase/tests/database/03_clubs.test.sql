@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(30);
+select plan(34);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('cccccccc-0000-4000-8000-000000000001', 'dona@test.local',    '{"full_name": "Dona"}'),
@@ -159,8 +159,11 @@ select throws_ok(
 
 set local request.jwt.claims to '{"sub": "cccccccc-0000-4000-8000-000000000002", "role": "authenticated"}';
 insert into public.club_book_votes (club_book_id, approved) values ((select value::uuid from t where key = 'cb3'), true);
-select is((select status from public.club_books where id = (select value::uuid from t where key = 'cb3')), 'reading',
-  'aprovação considera só quem era membro na proposta');
+select results_eq(
+  format($$ select status, started_on from public.club_books where id = %L $$, (select value from t where key = 'cb3')),
+  $$ values ('queued'::text, null::date) $$,
+  'aprovação considera só quem era membro na proposta; com outro livro em leitura, vai para a fila'
+);
 
 -- Proposta 4: saída de membro reavalia pendências -------------------------------------------------
 -- Novata passa a ser elegível para as próximas propostas.
@@ -180,8 +183,13 @@ select is((select status from public.club_books where id = (select value::uuid f
 set local request.jwt.claims to '{"sub": "cccccccc-0000-4000-8000-000000000002", "role": "authenticated"}';
 delete from public.club_members where user_id = 'cccccccc-0000-4000-8000-000000000002';
 set local request.jwt.claims to '{"sub": "cccccccc-0000-4000-8000-000000000001", "role": "authenticated"}';
-select is((select status from public.club_books where id = (select value::uuid from t where key = 'cb4')), 'reading',
-  'quando quem faltava sai do clube, a proposta é reavaliada');
+select is((select status from public.club_books where id = (select value::uuid from t where key = 'cb4')), 'queued',
+  'quando quem faltava sai do clube, a proposta é reavaliada (e entra na fila)');
+select is(
+  (select count(*)::int from public.club_books
+   where club_id = (select value::uuid from t where key = 'club') and status = 'reading'),
+  1,
+  'só um livro em leitura por vez');
 
 -- Conclusão e numeração das edições ---------------------------------------------------------------
 select is(
@@ -189,11 +197,20 @@ select is(
   1,
   'primeiro livro concluído é a edição 1'
 );
+select results_eq(
+  format($$ select status, started_on from public.club_books where id = %L $$, (select value from t where key = 'cb3')),
+  $$ values ('reading'::text, current_date + 1) $$,
+  'ao concluir, o mais antigo da fila entra em leitura no dia em que o anterior terminou'
+);
+select is((select status from public.club_books where id = (select value::uuid from t where key = 'cb4')), 'queued',
+  'o resto da fila espera a vez');
 select is(
-  (public.finish_club_book((select value::uuid from t where key = 'cb3'))).edition_number,
+  (public.finish_club_book((select value::uuid from t where key = 'cb3'), current_date + 2)).edition_number,
   2,
   'segundo livro concluído é a edição 2'
 );
+select is((select status from public.club_books where id = (select value::uuid from t where key = 'cb4')), 'reading',
+  'e o próximo da fila assume');
 select throws_ok(
   format($$ select public.finish_club_book(%L) $$, (select value from t where key = 'cb1')),
   '22023', null,

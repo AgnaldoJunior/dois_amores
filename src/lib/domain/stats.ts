@@ -26,3 +26,9 @@ export function computeReadingStats(readings: ReadingForStats[], clubsCount: num
 
 /** 3480 → "3.480" */
 export const formatCount = (value: number) => value.toLocaleString('pt-BR')
+
+/** Porcentagem lida (0–100) a partir da página atual; null sem página ou sem total. */
+export function readingProgress(currentPage: number | null | undefined, pages: number | null | undefined): number | null {
+  if (currentPage == null || !pages) return null
+  return Math.min(100, Math.max(0, Math.round((currentPage / pages) * 100)))
+}

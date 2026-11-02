@@ -54,7 +54,7 @@ const member = (id: string, name: string, role: 'owner' | 'member' = 'member', j
   user_id: id,
   role,
   joined_at: joined,
-  profile: { id, name, avatar_url: null },
+  profile: { id, name, avatar_url: null, pet: null as string | null },
 })
 
 const clubBook = (id: string, title: string, over: Partial<ClubBook> = {}): ClubBook => ({
@@ -67,6 +67,7 @@ const clubBook = (id: string, title: string, over: Partial<ClubBook> = {}): Club
   proposed_by: null,
   book: { id: `book-${id}`, title, author: 'Autora', cover_url: null, pages: 300 },
   votes: [],
+  queued_at: null,
   ...over,
 })
 
@@ -241,7 +242,7 @@ describe('página do clube', () => {
 describe('perfil do membro', () => {
   it('mostra nome, foto e dados literários', () => {
     const profile: MemberProfile = {
-      profile: { id: 'irla', name: 'Irla', avatar_url: null, bio: 'Sublinha e anota nas margens.' },
+      profile: { id: 'irla', name: 'Irla', avatar_url: null, bio: 'Sublinha e anota nas margens.', pet: '🐭' },
       readings: [
         { ...ranks('irla', 'b1', 5), pages: 200, book: { id: 'b1', title: 'Três', cover_url: null } },
         { ...ranks('irla', 'b2', 3), pages: 100, book: { id: 'b2', title: 'Verity', cover_url: null } },
@@ -396,5 +397,23 @@ describe('favoritos das estantes', () => {
     expect(within(list).getByText('4,5 · média de 2 membros')).toBeInTheDocument()
     await userEvent.click(within(list).getByRole('button', { name: 'propor ao clube' }))
     expect(m.propose).toHaveBeenCalledWith({ bookId: 'duna' })
+  })
+})
+
+describe('fila do clube', () => {
+  it('próximas leituras com o número planejado e quem escolheu', () => {
+    const club = seedClub()
+    club.members[1]!.profile.pet = '🐭'
+    club.books.push(
+      clubBook('verity', 'Verity', { status: 'queued', finished_on: null, edition_number: null, proposed_by: 'irla', queued_at: '2026-10-22T10:00:00Z' }),
+    )
+    m.club = club
+    renderApp('/clubes/club-1')
+    const next = screen.getByRole('region', { name: 'Próximas' })
+    // Edição 5 concluída → em leitura é a No.06 e a fila começa na No.07.
+    expect(next).toHaveTextContent('No.07')
+    expect(next).toHaveTextContent('escolha de 🐭 Irla')
+    expect(screen.getByRole('list', { name: 'Livros em leitura no clube' })).toHaveTextContent('No.06')
+    expect(within(screen.getByRole('region', { name: 'Membros' })).getByText('Irla 🐭')).toBeInTheDocument()
   })
 })

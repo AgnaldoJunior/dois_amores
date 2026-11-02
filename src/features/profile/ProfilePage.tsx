@@ -12,6 +12,7 @@ import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { deleteMyAccount, useProfile, useUpdateProfile, useUploadAvatar, type Profile } from './api'
 import { AVATAR_ACCEPT, validateAvatarFile } from './imageResize'
+import { PetPicker } from './PetPicker'
 
 /** /perfil/editar — foto, nome, bio, sair e excluir conta. */
 export function ProfileEditPage() {
@@ -31,6 +32,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
 
   const [name, setName] = useState(profile.name)
   const [bio, setBio] = useState(profile.bio ?? '')
+  const [pet, setPet] = useState<string | null>(profile.pet)
   const [message, setMessage] = useState<{ tone: 'error' | 'success'; text: string } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -39,7 +41,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
     e.preventDefault()
     if (!name.trim()) return setMessage({ tone: 'error', text: 'O nome não pode ficar vazio.' })
     try {
-      await update.mutateAsync({ name: name.trim(), bio: bio.trim() || null })
+      await update.mutateAsync({ name: name.trim(), bio: bio.trim() || null, pet })
       setMessage({ tone: 'success', text: 'Perfil salvo.' })
     } catch {
       setMessage({ tone: 'error', text: 'Não foi possível salvar. Tente de novo.' })
@@ -110,6 +112,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
           value={bio}
           onChange={(e) => setBio(e.target.value)}
         />
+        <PetPicker value={pet} onChange={setPet} />
         {message && <FormMessage tone={message.tone}>{message.text}</FormMessage>}
         <Button type="submit" loading={update.isPending}>
           Salvar

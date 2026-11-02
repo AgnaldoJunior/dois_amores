@@ -1,7 +1,7 @@
 import { approvalProgress, eligibleMembers } from './clubApproval'
 import { bookAverage, memberAverage, type Ranks } from './ratings'
 
-export type ClubBookStatus = 'pending' | 'reading' | 'finished' | 'rejected'
+export type ClubBookStatus = 'pending' | 'queued' | 'reading' | 'finished' | 'rejected'
 
 export type ClubBookLike = {
   id: string
@@ -12,6 +12,8 @@ export type ClubBookLike = {
   started_on: string | null
   book: { id: string }
   votes: { user_id: string; approved: boolean }[]
+  /** Quando entrou na fila (aprovado com outro livro em leitura). */
+  queued_at?: string | null
 }
 
 export type MemberLike = { user_id: string; joined_at: string }
@@ -24,11 +26,17 @@ export type ReadingLike = Ranks & {
   pages?: number | null
 }
 
-/** Prateleiras do clube: em andamento (início mais recente), concluídos (edição mais recente) e propostas (mais antigas primeiro). */
+/**
+ * Prateleiras do clube: em andamento (início mais recente), fila de próximas (ordem de aprovação),
+ * concluídos (edição mais recente) e propostas (mais antigas primeiro).
+ */
 export function groupClubBooks<T extends ClubBookLike>(books: T[]) {
   const byDesc = (a: string | null, b: string | null) => (b ?? '').localeCompare(a ?? '')
   return {
     reading: books.filter((b) => b.status === 'reading').sort((a, b) => byDesc(a.started_on, b.started_on)),
+    queued: books
+      .filter((b) => b.status === 'queued')
+      .sort((a, b) => (a.queued_at ?? a.created_at).localeCompare(b.queued_at ?? b.created_at)),
     finished: books
       .filter((b) => b.status === 'finished')
       .sort((a, b) => (b.edition_number ?? 0) - (a.edition_number ?? 0)),
@@ -80,3 +88,15 @@ export const isValidInviteCode = (code: string) => /^[A-HJ-NP-Z2-9]{6}$/.test(no
 
 /** Número da edição como nos ingressos: 8 → "No.08". */
 export const formatEdition = (n: number | null | undefined) => (n == null ? '' : `No.${String(n).padStart(2, '0')}`)
+
+/**
+ * Número que cada livro ainda sem edição vai receber: o em leitura é a próxima
+ * edição e a fila segue em ordem (No.08 lendo, No.09 e No.10 na fila).
+ */
+export function plannedEditions<T extends ClubBookLike>(books: T[]): Map<string, number> {
+  const { reading, queued } = groupClubBooks(books)
+  let next = Math.max(0, ...books.map((b) => b.edition_number ?? 0)) + 1
+  const planned = new Map<string, number>()
+  for (const b of [...[...reading].reverse(), ...queued]) planned.set(b.id, next++)
+  return planned
+}

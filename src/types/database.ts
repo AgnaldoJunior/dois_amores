@@ -85,14 +85,14 @@ isOneToOne: false
                   ]
                 },"club_books": {
                   Row: {
-                    "book_id": string,"club_id": string,"created_at": string,"edition_number": number | null,"finished_on": string | null,"id": string,"proposed_by": string | null,"started_on": string | null,"status": string
+                    "book_id": string,"club_id": string,"created_at": string,"edition_number": number | null,"finished_on": string | null,"id": string,"proposed_by": string | null,"queued_at": string | null,"started_on": string | null,"status": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "book_id": string,"club_id": string,"created_at"?: string,"edition_number"?: number | null,"finished_on"?: string | null,"id"?: string,"proposed_by"?: string | null,"started_on"?: string | null,"status"?: string
+                    "book_id": string,"club_id": string,"created_at"?: string,"edition_number"?: number | null,"finished_on"?: string | null,"id"?: string,"proposed_by"?: string | null,"queued_at"?: string | null,"started_on"?: string | null,"status"?: string
                   }
                   Update: {
-                    "book_id"?: string,"club_id"?: string,"created_at"?: string,"edition_number"?: number | null,"finished_on"?: string | null,"id"?: string,"proposed_by"?: string | null,"started_on"?: string | null,"status"?: string
+                    "book_id"?: string,"club_id"?: string,"created_at"?: string,"edition_number"?: number | null,"finished_on"?: string | null,"id"?: string,"proposed_by"?: string | null,"queued_at"?: string | null,"started_on"?: string | null,"status"?: string
                   }
                   Relationships: [
                     {
@@ -189,14 +189,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"bio": string | null,"created_at": string,"id": string,"name": string,"updated_at": string
+                    "avatar_url": string | null,"bio": string | null,"created_at": string,"id": string,"name": string,"pet": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"bio"?: string | null,"created_at"?: string,"id": string,"name"?: string,"updated_at"?: string
+                    "avatar_url"?: string | null,"bio"?: string | null,"created_at"?: string,"id": string,"name"?: string,"pet"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"bio"?: string | null,"created_at"?: string,"id"?: string,"name"?: string,"updated_at"?: string
+                    "avatar_url"?: string | null,"bio"?: string | null,"created_at"?: string,"id"?: string,"name"?: string,"pet"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -229,14 +229,14 @@ isOneToOne: false
                   ]
                 },"user_books": {
                   Row: {
-                    "book_id": string,"comment": string | null,"created_at": string,"favorite_character": string | null,"favorite_quote": string | null,"finished_on": string | null,"id": string,"rank_characters": number | null,"rank_ending": number | null,"rank_plot": number | null,"rank_writing": number | null,"started_on": string,"updated_at": string,"user_id": string
+                    "book_id": string,"comment": string | null,"created_at": string,"current_page": number | null,"favorite_character": string | null,"favorite_quote": string | null,"finished_on": string | null,"id": string,"rank_characters": number | null,"rank_ending": number | null,"rank_plot": number | null,"rank_writing": number | null,"started_on": string,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "book_id": string,"comment"?: string | null,"created_at"?: string,"favorite_character"?: string | null,"favorite_quote"?: string | null,"finished_on"?: string | null,"id"?: string,"rank_characters"?: number | null,"rank_ending"?: number | null,"rank_plot"?: number | null,"rank_writing"?: number | null,"started_on": string,"updated_at"?: string,"user_id"?: string
+                    "book_id": string,"comment"?: string | null,"created_at"?: string,"current_page"?: number | null,"favorite_character"?: string | null,"favorite_quote"?: string | null,"finished_on"?: string | null,"id"?: string,"rank_characters"?: number | null,"rank_ending"?: number | null,"rank_plot"?: number | null,"rank_writing"?: number | null,"started_on": string,"updated_at"?: string,"user_id"?: string
                   }
                   Update: {
-                    "book_id"?: string,"comment"?: string | null,"created_at"?: string,"favorite_character"?: string | null,"favorite_quote"?: string | null,"finished_on"?: string | null,"id"?: string,"rank_characters"?: number | null,"rank_ending"?: number | null,"rank_plot"?: number | null,"rank_writing"?: number | null,"started_on"?: string,"updated_at"?: string,"user_id"?: string
+                    "book_id"?: string,"comment"?: string | null,"created_at"?: string,"current_page"?: number | null,"favorite_character"?: string | null,"favorite_quote"?: string | null,"finished_on"?: string | null,"id"?: string,"rank_characters"?: number | null,"rank_ending"?: number | null,"rank_plot"?: number | null,"rank_writing"?: number | null,"started_on"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -295,6 +295,7 @@ isOneToOne: false
 "finished_on": string | null,
 "id": string,
 "proposed_by": string | null,
+"queued_at": string | null,
 "started_on": string | null,
 "status": string
             }
@@ -340,6 +341,7 @@ isOneToOne: false
 "finished_on": string | null,
 "id": string,
 "proposed_by": string | null,
+"queued_at": string | null,
 "started_on": string | null,
 "status": string
             }

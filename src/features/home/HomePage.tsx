@@ -17,6 +17,29 @@ import { clubBookPath } from '@/features/clubs/ClubReviewPage'
 import { clubPath } from '@/features/clubs/ClubsPage'
 import { useProfile } from '@/features/profile/api'
 import { useMyStats, useRecentReadings, type Reading } from '@/features/readings/api'
+import { ProgressCard } from '@/features/readings/ProgressCard'
+import { useShelf } from '@/features/shelf/api'
+
+/** "Lendo agora": leituras em andamento com a barra de progresso. */
+function ReadingNow() {
+  const { data: shelf } = useShelf()
+  const reading = shelf?.reading ?? []
+  if (reading.length === 0) return null
+  return (
+    <section className="flex flex-col gap-2.5" aria-labelledby="reading-now">
+      <SectionTitle>
+        <span id="reading-now">Lendo agora</span>
+      </SectionTitle>
+      <ul className="flex flex-col gap-2.5">
+        {reading.map((r) => (
+          <li key={r.id}>
+            <ProgressCard reading={r} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
 
 /** Ingresso verde com o livro que cada clube está lendo agora, e o atalho para o ranking. */
 function ClubNow() {
@@ -111,6 +134,8 @@ export function HomePage() {
         <Icon name="plus" className="size-icon-sm" />
         Publicar nova leitura
       </ButtonLink>
+
+      <ReadingNow />
 
       <ClubNow />
 

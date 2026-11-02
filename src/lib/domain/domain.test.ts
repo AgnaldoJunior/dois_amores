@@ -1,6 +1,6 @@
 import { approvalProgress, eligibleMembers, evaluateProposal } from './clubApproval'
 import { bookAverage, bookAverageFromRanks, formatAverage, memberAverage, roundToHalf } from './ratings'
-import { computeReadingStats, formatCount } from './stats'
+import { computeReadingStats, formatCount, readingProgress } from './stats'
 
 const ranks = (c: number | null, p: number | null, w: number | null, e: number | null) => ({
   rank_characters: c,
@@ -121,5 +121,19 @@ describe('evaluateProposal (aprovação de livro no clube)', () => {
       { userId: 'novata', joinedAt: '2026-10-20T09:00:00Z' },
     ]
     expect(eligibleMembers(list, '2026-10-19T12:00:00Z')).toEqual(['leyna', 'irla'])
+  })
+})
+
+describe('readingProgress', () => {
+  it('porcentagem arredondada e limitada a 0–100', () => {
+    expect(readingProgress(152, 400)).toBe(38)
+    expect(readingProgress(500, 400)).toBe(100)
+    expect(readingProgress(0, 400)).toBe(0)
+  })
+
+  it('sem página atual ou sem total de páginas', () => {
+    expect(readingProgress(null, 400)).toBeNull()
+    expect(readingProgress(10, null)).toBeNull()
+    expect(readingProgress(10, 0)).toBeNull()
   })
 })

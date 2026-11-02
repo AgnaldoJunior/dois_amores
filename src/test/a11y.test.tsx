@@ -51,6 +51,7 @@ vi.mock('@/features/readings/api', () => ({
   useRecentReadings: () => ({ data: [reading], isLoading: false }),
   useReading: () => ({ data: reading, isLoading: false }),
   useSaveReading: () => mutation,
+  useUpdateProgress: () => mutation,
   useDeleteReading: () => mutation,
   ensureBook: vi.fn(),
   findMyReadingId: vi.fn(),

@@ -13,7 +13,8 @@ import { AVATAR_ACCEPT, validateAvatarFile } from '@/features/profile/imageResiz
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { useBackgroundEnrichment } from '@/lib/books/useBackgroundEnrichment'
 import { formatDayMonth, formatMonthYear } from '@/lib/dates'
-import { clubBookAverage, formatEdition, groupClubBooks } from '@/lib/domain/clubs'
+import { clubBookAverage, formatEdition, groupClubBooks, plannedEditions } from '@/lib/domain/clubs'
+import { withPet } from '@/lib/pets'
 import { mostLoved } from '@/lib/domain/ranking'
 import { formatAverage } from '@/lib/domain/ratings'
 import {
@@ -43,6 +44,7 @@ export function ClubPage() {
 
   const memberIds = club.members.map((m) => m.user_id)
   const groups = groupClubBooks(club.books)
+  const planned = plannedEditions(club.books)
 
   return (
     <div className="flex flex-col gap-4">
@@ -58,7 +60,7 @@ export function ClubPage() {
             className="flex min-w-15 flex-col items-center gap-0.5 no-underline"
           >
             <Avatar name={m.profile.name} url={m.profile.avatar_url} size="md" />
-            <span className="font-hand text-base leading-none">{m.profile.name.split(/\s+/)[0]}</span>
+            <span className="font-hand text-base leading-none">{withPet(m.profile.name.split(/\s+/)[0]!, m.profile.pet)}</span>
           </Link>
         ))}
       </section>
@@ -73,12 +75,27 @@ export function ClubPage() {
           <ul aria-label="Livros em leitura no clube" className="flex flex-col gap-3">
             {groups.reading.map((cb) => (
               <li key={cb.id}>
-                <CurrentBookCard clubId={club.id} clubBook={cb} members={club.members} />
+                <CurrentBookCard clubId={club.id} clubBook={cb} members={club.members} edition={planned.get(cb.id)} />
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      {groups.queued.length > 0 && (
+        <section className="flex flex-col gap-2.5" aria-labelledby="club-next">
+          <SectionTitle aside={groups.queued.length}>
+            <span id="club-next">Próximas</span>
+          </SectionTitle>
+          <ol className="flex flex-col gap-2">
+            {groups.queued.map((cb) => (
+              <li key={cb.id}>
+                <NextBook clubBook={cb} members={club.members} edition={planned.get(cb.id)} />
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3" aria-labelledby="club-finished">
         <SectionTitle aside={groups.finished.length || undefined}>
@@ -195,10 +212,33 @@ function ClubHeader({ club }: { club: ClubDetail }) {
   )
 }
 
+/** Quem escolheu o livro, com o bichinho: "escolha de 🐭 Irla". */
+function chooserOf(clubBook: ClubBook, members: ClubMember[]) {
+  const p = members.find((m) => m.user_id === clubBook.proposed_by)?.profile
+  return p ? `${p.pet ? `${p.pet} ` : ''}${p.name.split(/\s+/)[0]}` : null
+}
+
+/** Livro na fila: número planejado, capa, título e quem escolheu. */
+function NextBook({ clubBook, members, edition }: { clubBook: ClubBook; members: ClubMember[]; edition?: number }) {
+  const chooser = chooserOf(clubBook, members)
+  return (
+    <article className="flex items-center gap-3 rounded-card border border-dashed border-primary bg-page p-2 pr-3">
+      <span className="tilt-l2 w-12 shrink-0 text-center font-mono font-bold text-xs uppercase tracking-label text-accentStrong">
+        {formatEdition(edition)}
+      </span>
+      <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="xs" decorative />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <h3 className="truncate font-type font-normal text-sm">{clubBook.book.title}</h3>
+        {chooser && <p className="font-hand text-md leading-none">escolha de {chooser}</p>}
+      </div>
+    </article>
+  )
+}
+
 /** Livro em leitura: selo, mês e edição, quem escolheu, reviews e concluir. */
-function CurrentBookCard({ clubId, clubBook, members }: { clubId: string; clubBook: ClubBook; members: ClubMember[] }) {
-  const chooser = members.find((m) => m.user_id === clubBook.proposed_by)?.profile.name.split(/\s+/)[0]
-  const stamp = [formatMonthYear(clubBook.started_on), formatEdition(clubBook.edition_number), chooser && `escolha de ${chooser}`]
+function CurrentBookCard({ clubId, clubBook, members, edition }: { clubId: string; clubBook: ClubBook; members: ClubMember[]; edition?: number }) {
+  const chooser = chooserOf(clubBook, members)
+  const stamp = [formatMonthYear(clubBook.started_on), formatEdition(clubBook.edition_number ?? edition), chooser && `escolha de ${chooser}`]
     .filter(Boolean)
     .join(' · ')
   return (

@@ -37,7 +37,10 @@ export function MemberPage() {
       <header className="flex items-center gap-4">
         <Avatar name={data.profile.name} url={data.profile.avatar_url} size="lg" />
         <div className="flex min-w-0 flex-col">
-          <h1 className="font-script font-normal text-5xl leading-none text-title">{data.profile.name}</h1>
+          <h1 className="font-script font-normal text-5xl leading-none text-title">
+            {data.profile.name}
+            {data.profile.pet && <span aria-hidden="true" className="ml-2 font-sans text-3xl">{data.profile.pet}</span>}
+          </h1>
           {data.profile.bio && <HandText>{data.profile.bio}</HandText>}
           {chosen.length > 0 && (
             <Label className="text-2xs">

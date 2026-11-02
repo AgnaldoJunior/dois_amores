@@ -23,11 +23,16 @@ export type ReadingValues = Pick<
   | 'comment'
 >
 
-export type Reading = ReadingValues & { id: string; book: Book }
+export type Reading = ReadingValues & {
+  id: string
+  book: Book
+  /** Página em que a leitura em andamento parou ("38% lido"). */
+  current_page?: number | null
+}
 
 const BOOK_FIELDS = 'id, title, author, pages, cover_url, summary'
 const READING_FIELDS = `id, started_on, finished_on, rank_characters, rank_plot, rank_writing, rank_ending,
-  favorite_character, favorite_quote, comment, book:books(${BOOK_FIELDS})`
+  favorite_character, favorite_quote, comment, current_page, book:books(${BOOK_FIELDS})`
 
 export const readingKeys = {
   all: ['readings'] as const,
@@ -179,5 +184,17 @@ export function useDeleteReading() {
       queryClient.invalidateQueries({ queryKey: readingKeys.all })
       queryClient.invalidateQueries({ queryKey: ['feed'] })
     },
+  })
+}
+
+/** Atualiza a página atual de uma leitura em andamento. */
+export function useUpdateProgress() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, page }: { id: string; page: number | null }) => {
+      const { error } = await supabase.from('user_books').update({ current_page: page }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: readingKeys.all }),
   })
 }

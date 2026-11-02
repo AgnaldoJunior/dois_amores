@@ -3,7 +3,9 @@ import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { supabase, type Tables } from '@/lib/supabase'
 import { resizeAvatar } from './imageResize'
 
-export type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'avatar_url' | 'bio'>
+export type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'avatar_url' | 'bio' | 'pet'>
+
+const PROFILE_FIELDS = 'id, name, avatar_url, bio, pet'
 
 export const profileKeys = {
   detail: (userId: string) => ['profile', userId] as const,
@@ -16,7 +18,7 @@ export function useProfile() {
     queryFn: async (): Promise<Profile> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, avatar_url, bio')
+        .select(PROFILE_FIELDS)
         .eq('id', user.id)
         .single()
       if (error) throw error
@@ -29,12 +31,12 @@ export function useUpdateProfile() {
   const user = useCurrentUser()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (changes: Partial<Pick<Profile, 'name' | 'bio' | 'avatar_url'>>) => {
+    mutationFn: async (changes: Partial<Pick<Profile, 'name' | 'bio' | 'avatar_url' | 'pet'>>) => {
       const { data, error } = await supabase
         .from('profiles')
         .update(changes)
         .eq('id', user.id)
-        .select('id, name, avatar_url, bio')
+        .select(PROFILE_FIELDS)
         .single()
       if (error) throw error
       return data

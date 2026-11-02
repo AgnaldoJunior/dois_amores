@@ -13,6 +13,7 @@ import { formatMonthYear } from '@/lib/dates'
 import { clubBookAverage, formatEdition } from '@/lib/domain/clubs'
 import { formatAverage, memberAverage } from '@/lib/domain/ratings'
 import { formatCount } from '@/lib/domain/stats'
+import { withPet } from '@/lib/pets'
 import { useClub, type ClubBook, type ClubMember, type ClubReading } from './api'
 import { clubPath } from './ClubsPage'
 
@@ -95,7 +96,7 @@ function Review({ clubId, clubBook, members, readings, average }: ReviewProps) {
               }
             >
               <Avatar name={m.profile.name} url={m.profile.avatar_url} size="xs" border="thin" />
-              <span className="truncate font-hand text-sm">{firstName(m.profile.name)}</span>
+              <span className="truncate font-hand text-sm">{withPet(firstName(m.profile.name), m.profile.pet)}</span>
             </button>
           )
         })}

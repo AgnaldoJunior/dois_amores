@@ -1,5 +1,8 @@
 import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { renderApp } from '@/test/renderApp'
+
+const update = vi.hoisted(() => vi.fn())
 
 const year = new Date().getFullYear()
 const book = (id: string, title: string) => ({ id, title, author: 'Autora', pages: 300, cover_url: null })
@@ -18,7 +21,10 @@ const reading = (id: string, b: ReturnType<typeof book>, finished_on: string | n
 })
 
 vi.mock('@/features/profile/api', () => ({
-  useProfile: () => ({ data: { id: 'user-1', name: 'Leyna', avatar_url: null, bio: 'Lê de tudo.' }, isLoading: false }),
+  useProfile: () => ({ data: { id: 'user-1', name: 'Leyna', avatar_url: null, bio: 'Lê de tudo.', pet: '🐵' }, isLoading: false }),
+  useUpdateProfile: () => ({ mutateAsync: update, isPending: false }),
+  useUploadAvatar: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  deleteMyAccount: vi.fn(),
 }))
 vi.mock('@/features/shelf/api', () => ({
   useShelf: () => ({
@@ -60,5 +66,17 @@ describe('perfil', () => {
     const mine = screen.getByRole('list', { name: 'Livros que escolhi para o clube' })
     expect(within(mine).getByRole('link', { name: 'Três' })).toHaveAttribute('href', '/clubes/c1/livros/cb5')
     expect(screen.getByRole('link', { name: 'Editar perfil' })).toHaveAttribute('href', '/perfil/editar')
+  })
+})
+
+describe('editar perfil', () => {
+  it('escolhe o bichinho e salva junto com nome e bio', async () => {
+    update.mockResolvedValue(undefined)
+    renderApp('/perfil/editar')
+    const pets = screen.getByRole('group', { name: 'Seu bichinho' })
+    expect(within(pets).getByRole('radio', { name: 'macaquinho' })).toBeChecked()
+    await userEvent.click(within(pets).getByRole('radio', { name: 'raposa' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+    expect(update).toHaveBeenCalledWith({ name: 'Leyna', bio: 'Lê de tudo.', pet: '🦊' })
   })
 })

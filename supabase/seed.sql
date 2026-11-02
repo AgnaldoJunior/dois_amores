@@ -39,6 +39,12 @@ update public.profiles set bio = case name
   when 'Irla'    then 'Sublinha, dobra a página e anota nas margens.'
   when 'Wanessa' then 'Suspense, fantasia e um bom drama familiar.'
   when 'Thaís'   then 'Clássicos brasileiros e romances de verão.'
+end,
+pet = case name
+  when 'Leyna'   then '🐵'
+  when 'Irla'    then '🐭'
+  when 'Wanessa' then '🐈‍⬛'
+  when 'Thaís'   then '🦒'
 end;
 
 -- Livros (Open Library) -------------------------------------------------------
@@ -154,6 +160,12 @@ update public.posts po
 set created_at = (ub.finished_on + time '20:00') at time zone 'America/Sao_Paulo'
 from public.user_books ub
 where ub.id = po.user_book_id;
+
+-- Página atual das leituras em andamento ("38% lido").
+update public.user_books ub
+set current_page = round(b.pages * 0.38)
+from public.books b
+where b.id = ub.book_id and ub.finished_on is null and b.pages is not null;
 
 -- "Quero ler"
 insert into public.reading_list (user_id, book_id, created_at) values

@@ -36,7 +36,10 @@ export function ProfileOverviewPage() {
       <header className="flex items-center gap-4">
         <Avatar name={profile?.name ?? ''} url={profile?.avatar_url} size="lg" />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h1 className="font-script font-normal text-5xl leading-none text-title">{profile?.name}</h1>
+          <h1 className="font-script font-normal text-5xl leading-none text-title">
+            {profile?.name}
+            {profile?.pet && <span aria-hidden="true" className="ml-2 font-sans text-3xl">{profile.pet}</span>}
+          </h1>
           {profile?.bio && <HandText>{profile.bio}</HandText>}
           {mine.length > 0 && (
             <Label className="text-2xs">escolheu {mine.map((b) => formatEdition(b.edition_number)).filter(Boolean).join(', ') || 'o livro atual'}</Label>

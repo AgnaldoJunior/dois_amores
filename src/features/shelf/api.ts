@@ -30,7 +30,7 @@ export type Shelf = {
 
 const SHELF_BOOK = 'id, title, author, pages, cover_url, enriched_at'
 const READING_FIELDS = `id, started_on, finished_on, rank_characters, rank_plot, rank_writing, rank_ending,
-  favorite_character, favorite_quote, comment, book:books(${SHELF_BOOK}, summary)`
+  favorite_character, favorite_quote, comment, current_page, book:books(${SHELF_BOOK}, summary)`
 
 export const shelfKeys = {
   shelf: (userId: string) => ['readings', 'shelf', userId] as const,

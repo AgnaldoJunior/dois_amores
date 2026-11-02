@@ -4,8 +4,10 @@ import {
   isValidInviteCode,
   memberStats,
   normalizeInviteCode,
+  plannedEditions,
   proposalState,
   type ClubBookLike,
+  type ClubBookStatus,
   type ReadingLike,
 } from './clubs'
 
@@ -110,5 +112,38 @@ describe('código de convite', () => {
     expect(isValidInviteCode('dams26')).toBe(true)
     expect(isValidInviteCode('DAMS20')).toBe(false) // 0 não existe nos códigos
     expect(isValidInviteCode('DAMS2')).toBe(false)
+  })
+})
+
+describe('fila de próximas leituras', () => {
+  const book = (id: string, status: ClubBookStatus, edition_number: number | null, queued_at: string | null = null) => ({
+    id,
+    status,
+    created_at: '2026-10-01T00:00:00Z',
+    edition_number,
+    finished_on: status === 'finished' ? '2026-10-20' : null,
+    started_on: status === 'reading' ? '2026-10-21' : null,
+    book: { id: `b-${id}` },
+    votes: [],
+    queued_at,
+  })
+  const books = [
+    book('f6', 'finished', 6),
+    book('f7', 'finished', 7),
+    book('q2', 'queued', null, '2026-10-25T10:00:00Z'),
+    book('r', 'reading', null),
+    book('q1', 'queued', null, '2026-10-22T10:00:00Z'),
+  ]
+
+  it('agrupa a fila na ordem em que foi aprovada', () => {
+    expect(groupClubBooks(books).queued.map((b) => b.id)).toEqual(['q1', 'q2'])
+  })
+
+  it('o livro em leitura é a próxima edição e a fila segue a numeração', () => {
+    expect([...plannedEditions(books)]).toEqual([
+      ['r', 8],
+      ['q1', 9],
+      ['q2', 10],
+    ])
   })
 })

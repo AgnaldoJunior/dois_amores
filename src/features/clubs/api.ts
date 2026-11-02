@@ -12,7 +12,7 @@ export type ClubMember = {
   user_id: string
   role: 'owner' | 'member'
   joined_at: string
-  profile: { id: string; name: string; avatar_url: string | null }
+  profile: { id: string; name: string; avatar_url: string | null; pet: string | null }
 }
 
 export type ClubBook = {
@@ -32,6 +32,7 @@ export type ClubBook = {
     enriched_at?: string | null
   }
   votes: { user_id: string; approved: boolean }[]
+  queued_at: string | null
 }
 
 export type ClubDetail = {
@@ -94,8 +95,8 @@ export function useClub(clubId: string) {
         .from('clubs')
         .select(
           `id, name, cover_url, invite_code, created_by,
-           members:club_members(user_id, role, joined_at, profile:profiles(id, name, avatar_url)),
-           books:club_books(id, status, started_on, finished_on, edition_number, created_at, proposed_by,
+           members:club_members(user_id, role, joined_at, profile:profiles(id, name, avatar_url, pet)),
+           books:club_books(id, status, started_on, finished_on, edition_number, created_at, queued_at, proposed_by,
              book:books(id, title, author, cover_url, pages, enriched_at),
              votes:club_book_votes(user_id, approved))`,
         )
@@ -122,7 +123,7 @@ export function useClub(clubId: string) {
 }
 
 export type MemberProfile = {
-  profile: { id: string; name: string; avatar_url: string | null; bio: string | null }
+  profile: { id: string; name: string; avatar_url: string | null; bio: string | null; pet: string | null }
   readings: (ReadingLike & { book: { id: string; title: string; cover_url: string | null; enriched_at?: string | null } })[]
 }
 
@@ -132,7 +133,7 @@ export function useMemberProfile(userId: string) {
     queryKey: clubKeys.member(userId),
     queryFn: async (): Promise<MemberProfile> => {
       const [profile, readings] = await Promise.all([
-        supabase.from('profiles').select('id, name, avatar_url, bio').eq('id', userId).single(),
+        supabase.from('profiles').select('id, name, avatar_url, bio, pet').eq('id', userId).single(),
         supabase
           .from('user_books')
           .select(`user_id, book_id, started_on, finished_on, ${RANKS}, book:books(id, title, cover_url, pages, enriched_at)`)
@@ -168,7 +169,7 @@ export function useMyClubBooks() {
       const { data, error } = await supabase
         .from('club_books')
         .select('id, club_id, status, edition_number, started_on, proposed_by, book:books(id, title, author, cover_url)')
-        .in('status', ['reading', 'finished'])
+        .in('status', ['queued', 'reading', 'finished'])
         .order('edition_number', { ascending: false, nullsFirst: true })
       if (error) throw error
       return data as unknown as MyClubBook[]
