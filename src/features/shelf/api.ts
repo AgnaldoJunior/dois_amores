@@ -5,6 +5,7 @@ import { enrichBook } from '@/lib/books/enrich'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { getWorkSummary } from '@/lib/openlibrary/client'
 import { supabase, type Tables } from '@/lib/supabase'
+import type { Ranks } from '@/lib/domain/ratings'
 
 export type ShelfBook = Pick<Tables<'books'>, 'id' | 'title' | 'author' | 'pages' | 'cover_url'> & { enriched_at?: string | null }
 export type BookDetail = Pick<
@@ -30,7 +31,7 @@ export type Shelf = {
 
 const SHELF_BOOK = 'id, title, author, pages, cover_url, enriched_at'
 const READING_FIELDS = `id, started_on, finished_on, rank_characters, rank_plot, rank_writing, rank_ending,
-  favorite_character, favorite_quote, comment, current_page, book:books(${SHELF_BOOK}, summary)`
+  favorite_character, favorite_quote, comment, format, current_page, book:books(${SHELF_BOOK}, summary)`
 
 export const shelfKeys = {
   shelf: (userId: string) => ['readings', 'shelf', userId] as const,
@@ -211,5 +212,30 @@ export function useAddSuggestionToWishlist() {
       return book
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+  })
+}
+
+export type BookReader = Ranks & {
+  user: { id: string; name: string; avatar_url: string | null; avatar_mode?: string | null; avatar_config?: unknown }
+  finished_on: string | null
+}
+
+/** "Quem leu": outras pessoas que terminaram este livro, com as notas. */
+export function useBookReaders(bookId: string) {
+  const user = useCurrentUser()
+  return useQuery({
+    queryKey: ['books', bookId, 'readers'],
+    queryFn: async (): Promise<BookReader[]> => {
+      const { data, error } = await supabase
+        .from('user_books')
+        .select(
+          'finished_on, rank_characters, rank_plot, rank_writing, rank_ending, user:profiles!user_books_user_id_fkey(id, name, avatar_url, avatar_mode, avatar_config)',
+        )
+        .eq('book_id', bookId)
+        .neq('user_id', user.id)
+        .not('finished_on', 'is', null)
+      if (error) throw error
+      return data as unknown as BookReader[]
+    },
   })
 }

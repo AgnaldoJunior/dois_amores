@@ -32,7 +32,7 @@ export function RankingPage() {
   const memberIds = club?.members.map((m) => m.user_id) ?? []
   const yearReadings = useClubYearReadings(clubId, memberIds, year)
 
-  if (isLoading || yearReadings.isLoading) return <p className="font-hand text-lg text-primary">Contando os livros…</p>
+  if (isLoading || yearReadings.isLoading) return <p className="font-serif italic text-lg text-primary">Contando os livros…</p>
   if (isError || !club) return <FormMessage tone="error">Clube não encontrado.</FormMessage>
 
   const readings = yearReadings.data ?? []
@@ -50,8 +50,8 @@ export function RankingPage() {
       <BackLink to={clubPath(club.id)}>clube</BackLink>
       <header className="flex items-center gap-2.5">
         <span className="rule" aria-hidden="true" />
-        <h1 className="font-script font-normal text-5xl leading-none text-title">Ranking</h1>
-        <span className="tilt-l2 -ml-1.5 font-mono font-bold text-xs uppercase tracking-label">{year}</span>
+        <h1 className="font-display italic font-semibold text-5xl leading-none text-primary">Ranking</h1>
+        <span className=" -ml-1.5 font-sans font-semibold text-xs uppercase tracking-label">{year}</span>
         <span className="rule" aria-hidden="true" />
       </header>
 
@@ -63,7 +63,7 @@ export function RankingPage() {
             aria-pressed={mode === m.mode}
             onClick={() => setMode(m.mode)}
             className={
-              'min-h-pill-h rounded-full font-mono font-bold text-xs uppercase tracking-label ' +
+              'min-h-pill-h rounded-full font-sans font-semibold text-xs uppercase tracking-label ' +
               (mode === m.mode ? 'bg-primary text-inverse' : 'text-primary')
             }
           >
@@ -72,17 +72,17 @@ export function RankingPage() {
         ))}
       </div>
 
-      <ol aria-label="Pódio" className="stripes grid grid-cols-3 items-end gap-2 rounded-card border border-line px-3 pt-4">
+      <ol aria-label="Pódio" className="bg-tag grid grid-cols-3 items-end gap-2 rounded-card border border-line px-3 pt-4">
         {podium.map((row) => {
           const place = PODIUM[row.position as 1 | 2 | 3] ?? PODIUM[3]
           const member = memberOf(row.userId)
           return (
             <li key={row.userId} className="flex flex-col items-center gap-1">
               <Avatar {...avatarOf(member.profile)} size={place.avatar} />
-              <span className="rounded-sm bg-stripeLight px-1.5 font-script text-2xl leading-none">{firstName(member.profile.name)}</span>
+              <span className="rounded-sm bg-card px-1.5 font-display italic text-2xl leading-none">{firstName(member.profile.name)}</span>
               <div className={`flex w-full flex-col items-center rounded-t-card bg-primary pt-2 text-inverse ${place.bar}`}>
                 <span className="font-display text-3xl leading-none">{show(row)}</span>
-                <span className="font-mono font-bold text-2xs uppercase tracking-label text-pill">{row.position}º lugar</span>
+                <span className="font-sans font-semibold text-2xs uppercase tracking-label text-blush">{row.position}º lugar</span>
               </div>
             </li>
           )
@@ -95,9 +95,9 @@ export function RankingPage() {
             const member = memberOf(row.userId)
             return (
               <li key={row.userId} className="flex items-center gap-3 rounded-card border border-primary bg-card px-3 py-2">
-                <span className="w-5 font-display text-2xl text-accentStrong">{row.position}</span>
+                <span className="w-5 font-display text-2xl text-primary">{row.position}</span>
                 <Avatar {...avatarOf(member.profile)} size="xs" />
-                <span className="flex-1 font-script text-title-md leading-none">{firstName(member.profile.name)}</span>
+                <span className="flex-1 font-display italic text-primary-md leading-none">{firstName(member.profile.name)}</span>
                 <span className="font-display text-2xl">{show(row)}</span>
               </li>
             )
@@ -131,10 +131,10 @@ function AwardCard({ title, member, children }: { title: string; member: ClubMem
       {member ? (
         <Avatar {...avatarOf(member.profile)} size="xs" />
       ) : (
-        <span aria-hidden="true" className="size-avatar-xs rounded-full border border-dashed border-slot" />
+        <span aria-hidden="true" className="size-avatar-xs rounded-full border border-dashed border-border" />
       )}
-      <span className="rounded-xs bg-pill px-1 font-mono font-bold text-2xs uppercase tracking-label">{title}</span>
-      <span className="font-hand text-sm leading-tight">
+      <span className="rounded-xs bg-tag px-1 font-sans font-semibold text-2xs uppercase tracking-label">{title}</span>
+      <span className="font-serif italic text-sm leading-tight">
         {member ? (
           <>
             <span className="sr-only">{member.profile.name}: </span>

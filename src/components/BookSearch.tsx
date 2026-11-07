@@ -85,7 +85,7 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
 
   return (
     <div className="relative flex flex-col gap-2">
-      <label htmlFor={id} className="font-mono font-bold text-xs uppercase tracking-label text-primary">
+      <label htmlFor={id} className="font-sans text-2xs font-semibold uppercase tracking-label text-primary">
         {label}
       </label>
       <input
@@ -110,11 +110,11 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
         className={
-          'h-control-h w-full rounded-sm border border-primary bg-page px-3 ' +
-          'font-sans text-md text-primary placeholder:text-primary placeholder:opacity-60'
+          'h-control-h w-full rounded-full border border-border bg-card px-4.5 ' +
+          'font-sans text-lg text-ink placeholder:text-muted'
         }
       />
-      <p id={statusId} aria-live="polite" className="font-hand text-lg leading-tight text-primary min-h-6">
+      <p id={statusId} aria-live="polite" className="m-0 min-h-6 font-serif italic text-base text-muted">
         {status}
       </p>
       <ul
@@ -122,7 +122,7 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
         role="listbox"
         aria-label="Sugestões de livros"
         hidden={!visible}
-        className="flex flex-col rounded-card border border-primary bg-card"
+        className="flex flex-col rounded-card border border-line bg-card"
       >
         {results.map((book, i) => (
           <li
@@ -135,8 +135,8 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
             onClick={() => choose(book)}
             onMouseEnter={() => setActive(i)}
             className={
-              'flex cursor-pointer items-center gap-3 border-b border-dashed border-slot px-3 py-2 last:border-b-0 ' +
-              (i === activeIndex ? 'bg-pill' : '')
+              'flex cursor-pointer items-center gap-3 border-b border-line px-3 py-2.5 last:border-b-0 ' +
+              (i === activeIndex ? 'bg-tag' : '')
             }
           >
             <BookCover
@@ -146,8 +146,8 @@ export function BookSearch({ onSelect, label = 'Buscar livro', disabled }: BookS
               decorative
             />
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="truncate font-type text-sm text-primary">{book.title}</span>
-              <span className="truncate font-hand text-md leading-none text-primary">
+              <span className="truncate font-display italic font-semibold text-lg text-ink">{book.title}</span>
+              <span className="truncate font-serif italic text-sm text-muted">
                 {[book.author, book.year].filter(Boolean).join(' · ')}
               </span>
             </span>

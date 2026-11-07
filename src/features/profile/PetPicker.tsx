@@ -4,8 +4,8 @@ import { PETS } from '@/lib/pets'
 export function PetPicker({ value, onChange }: { value: string | null; onChange: (pet: string | null) => void }) {
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 font-mono font-bold text-xs uppercase tracking-label">Seu bichinho</legend>
-      <p className="-mt-1 font-hand text-md">ele marca os livros que você escolher no clube</p>
+      <legend className="mb-2 font-sans font-semibold text-xs uppercase tracking-label">Seu bichinho</legend>
+      <p className="-mt-1 font-serif italic text-md">ele marca os livros que você escolher no clube</p>
       <div className="grid grid-cols-4 gap-2">
         {PETS.map((p) => (
           <label

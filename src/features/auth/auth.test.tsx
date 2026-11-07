@@ -44,7 +44,7 @@ describe('tela de login', () => {
     renderApp('/entrar', null)
     expect(screen.getByLabelText('E-mail')).toHaveAttribute('type', 'email')
     expect(screen.getByLabelText('Senha')).toHaveAttribute('type', 'password')
-    expect(screen.getByRole('button', { name: 'Continuar com Google' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'continuar com Google' })).toBeInTheDocument()
     expect(screen.queryByText(/Apple/)).not.toBeInTheDocument()
   })
 
@@ -53,7 +53,7 @@ describe('tela de login', () => {
     renderApp('/entrar', null)
     await userEvent.type(screen.getByLabelText('E-mail'), 'leyna@example.com')
     await userEvent.type(screen.getByLabelText('Senha'), 'errada123')
-    await userEvent.click(screen.getByRole('button', { name: 'Entrar' }))
+    await userEvent.click(screen.getByRole('button', { name: 'entrar' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('E-mail ou senha incorretos.')
     expect(auth.signInWithPassword).toHaveBeenCalledWith({ email: 'leyna@example.com', password: 'errada123' })
   })
@@ -61,7 +61,7 @@ describe('tela de login', () => {
   it('login com Google volta para o app', async () => {
     auth.signInWithOAuth.mockResolvedValue({ error: null })
     renderApp('/entrar', null)
-    await userEvent.click(screen.getByRole('button', { name: 'Continuar com Google' }))
+    await userEvent.click(screen.getByRole('button', { name: 'continuar com Google' }))
     expect(auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/` },
@@ -75,7 +75,7 @@ describe('cadastro', () => {
     await userEvent.type(screen.getByLabelText('E-mail'), 'leyna@example')
     await userEvent.type(screen.getByLabelText('Senha'), 'abc')
     await userEvent.type(screen.getByLabelText('Confirmar senha'), 'abd')
-    await userEvent.click(screen.getByRole('button', { name: 'Criar conta' }))
+    await userEvent.click(screen.getByRole('button', { name: 'criar conta' }))
 
     expect(screen.getByLabelText('Nome')).toHaveAccessibleDescription('Conte como quer ser chamada(o).')
     expect(screen.getByLabelText('E-mail')).toHaveAttribute('aria-invalid', 'true')
@@ -90,7 +90,7 @@ describe('cadastro', () => {
     await userEvent.type(screen.getByLabelText('E-mail'), 'leyna@example.com')
     await userEvent.type(screen.getByLabelText('Senha'), 'livros2026')
     await userEvent.type(screen.getByLabelText('Confirmar senha'), 'livros2026')
-    await userEvent.click(screen.getByRole('button', { name: 'Criar conta' }))
+    await userEvent.click(screen.getByRole('button', { name: 'criar conta' }))
 
     expect(await screen.findByRole('heading', { name: 'Confira seu e-mail' })).toBeInTheDocument()
     expect(auth.signUp).toHaveBeenCalledWith({

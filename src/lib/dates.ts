@@ -37,3 +37,10 @@ export function formatMonthYear(iso: string | null | undefined): string {
   if (!d) return ''
   return `${MONTHS_LONG[d.month - 1]} ${d.year}`
 }
+
+/** "12 out" — dia e mês abreviado, como no feed. */
+export function formatDayMonthShort(iso: string | null | undefined): string {
+  const d = iso ? parseIsoDate(iso) : null
+  if (!d) return ''
+  return `${d.day} ${MONTHS_SHORT[d.month - 1]!.toLowerCase()}`
+}

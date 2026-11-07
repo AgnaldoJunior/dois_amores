@@ -19,7 +19,7 @@ export function RatingInput({ label, value, onChange, max = 5 }: RatingInputProp
       <legend className="sr-only">{label}</legend>
       <span
         aria-hidden="true"
-        className="w-rating-label-w shrink-0 rounded-xs bg-pill px-2 py-1 text-center font-mono font-bold text-2xs uppercase tracking-label text-primary"
+        className="font-sans text-md font-medium text-ink"
       >
         {label}
       </span>
@@ -29,7 +29,7 @@ export function RatingInput({ label, value, onChange, max = 5 }: RatingInputProp
           return (
             <label
               key={n}
-              className="flex h-11 w-10 cursor-pointer items-center justify-center rounded-sm has-[:focus-visible]:outline has-[:focus-visible]:outline-primary"
+              className="flex h-11 w-9 cursor-pointer items-center justify-center rounded-sm has-[:focus-visible]:outline has-[:focus-visible]:outline-primary"
             >
               <input
                 type="radio"

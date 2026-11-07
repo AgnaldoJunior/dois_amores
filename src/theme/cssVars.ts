@@ -33,7 +33,6 @@ export function buildCssVariables(t: Tokens = defaultTokens): Record<string, str
   for (const [k, v] of Object.entries(t.radius)) add('radius', k, v === 9999 ? '9999px' : rem(v))
   for (const [k, v] of Object.entries(t.borderWidth)) add('border', k, `${v}px`)
   for (const [k, v] of Object.entries(t.shadow)) add('shadow', k, v)
-  for (const [k, v] of Object.entries(t.tilt)) add('tilt', k, `${v}deg`)
   for (const [k, v] of Object.entries(t.blur)) add('blur', k, `${v}px`)
   for (const [k, v] of Object.entries(t.duration)) add('duration', k, v)
 
@@ -45,8 +44,8 @@ export function buildFontFaces(t: Tokens = defaultTokens): string {
     .flatMap((font) =>
       font.files.map(
         (file) =>
-          `@font-face{font-family:"${font.family}";src:url("${file.src}") format("truetype");` +
-          `font-weight:${file.weight};font-style:normal;font-display:swap;}`,
+          `@font-face{font-family:"${font.family}";src:url("${file.src}") format("${file.src.endsWith('.woff2') ? 'woff2' : 'truetype'}");` +
+          `font-weight:${file.weight};font-style:${file.style};font-display:swap;}`,
       ),
     )
     .join('\n')

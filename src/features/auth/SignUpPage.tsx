@@ -55,7 +55,7 @@ export function SignUpPage() {
 
   if (sentTo) {
     return (
-      <AuthLayout title="Confira seu e-mail">
+      <AuthLayout title="Confira seu e-mail" back={{ to: '/entrar', label: 'entrar' }}>
         <FormMessage tone="success">
           Enviamos um link de confirmação para {sentTo}. Abra o e-mail e toque no link para ativar a conta.
           Se não encontrar, olhe também a pasta de spam.
@@ -66,7 +66,7 @@ export function SignUpPage() {
   }
 
   return (
-    <AuthLayout title="Criar conta">
+    <AuthLayout title="crie sua conta" subtitle="é rápido: seu nome, seu e-mail e uma senha." back={{ to: '/entrar', label: 'entrar' }}>
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <TextField
           label="Nome"
@@ -107,10 +107,10 @@ export function SignUpPage() {
         />
         <FormMessage tone="error">{formError}</FormMessage>
         <Button type="submit" loading={submitting}>
-          Criar conta
+          criar conta
         </Button>
       </form>
-      <TextLink to="/entrar">Já tenho conta</TextLink>
+      <TextLink to="/entrar">já tenho conta · entrar</TextLink>
     </AuthLayout>
   )
 }

@@ -85,14 +85,14 @@ isOneToOne: false
                   ]
                 },"club_books": {
                   Row: {
-                    "book_id": string,"club_id": string,"created_at": string,"edition_number": number | null,"finished_on": string | null,"id": string,"proposed_by": string | null,"queued_at": string | null,"started_on": string | null,"status": string
+                    "book_id": string,"club_id": string,"created_at": string,"due_on": string | null,"edition_number": number | null,"finished_on": string | null,"id": string,"proposed_by": string | null,"queued_at": string | null,"started_on": string | null,"status": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "book_id": string,"club_id": string,"created_at"?: string,"edition_number"?: number | null,"finished_on"?: string | null,"id"?: string,"proposed_by"?: string | null,"queued_at"?: string | null,"started_on"?: string | null,"status"?: string
+                    "book_id": string,"club_id": string,"created_at"?: string,"due_on"?: string | null,"edition_number"?: number | null,"finished_on"?: string | null,"id"?: string,"proposed_by"?: string | null,"queued_at"?: string | null,"started_on"?: string | null,"status"?: string
                   }
                   Update: {
-                    "book_id"?: string,"club_id"?: string,"created_at"?: string,"edition_number"?: number | null,"finished_on"?: string | null,"id"?: string,"proposed_by"?: string | null,"queued_at"?: string | null,"started_on"?: string | null,"status"?: string
+                    "book_id"?: string,"club_id"?: string,"created_at"?: string,"due_on"?: string | null,"edition_number"?: number | null,"finished_on"?: string | null,"id"?: string,"proposed_by"?: string | null,"queued_at"?: string | null,"started_on"?: string | null,"status"?: string
                   }
                   Relationships: [
                     {
@@ -110,6 +110,32 @@ isOneToOne: false
     },{
       foreignKeyName: "club_books_proposed_by_fkey"
       columns: ["proposed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"club_events": {
+                  Row: {
+                    "club_id": string,"created_at": string,"created_by": string | null,"happens_on": string,"id": string,"notes": string | null,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "club_id": string,"created_at"?: string,"created_by"?: string | null,"happens_on": string,"id"?: string,"notes"?: string | null,"title": string
+                  }
+                  Update: {
+                    "club_id"?: string,"created_at"?: string,"created_by"?: string | null,"happens_on"?: string,"id"?: string,"notes"?: string | null,"title"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "club_events_club_id_fkey"
+      columns: ["club_id"]
+isOneToOne: false
+      referencedRelation: "clubs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "club_events_created_by_fkey"
+      columns: ["created_by"]
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
@@ -143,19 +169,97 @@ isOneToOne: false
                   ]
                 },"clubs": {
                   Row: {
-                    "cover_url": string | null,"created_at": string,"created_by": string | null,"id": string,"invite_code": string,"name": string
+                    "cover_url": string | null,"created_at": string,"created_by": string | null,"description": string | null,"id": string,"invite_code": string,"name": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "cover_url"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"invite_code": string,"name": string
+                    "cover_url"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"invite_code": string,"name": string
                   }
                   Update: {
-                    "cover_url"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"invite_code"?: string,"name"?: string
+                    "cover_url"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"invite_code"?: string,"name"?: string
                   }
                   Relationships: [
                     {
       foreignKeyName: "clubs_created_by_fkey"
       columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"follows": {
+                  Row: {
+                    "created_at": string,"followee_id": string,"follower_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"followee_id": string,"follower_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"followee_id"?: string,"follower_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "follows_followee_id_fkey"
+      columns: ["followee_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "follows_follower_id_fkey"
+      columns: ["follower_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"post_comments": {
+                  Row: {
+                    "body": string,"created_at": string,"id": string,"post_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body": string,"created_at"?: string,"id"?: string,"post_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "body"?: string,"created_at"?: string,"id"?: string,"post_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "post_comments_post_id_fkey"
+      columns: ["post_id"]
+isOneToOne: false
+      referencedRelation: "posts"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "post_comments_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"post_likes": {
+                  Row: {
+                    "created_at": string,"post_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"post_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"post_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "post_likes_post_id_fkey"
+      columns: ["post_id"]
+isOneToOne: false
+      referencedRelation: "posts"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "post_likes_user_id_fkey"
+      columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
@@ -187,16 +291,42 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"profiles": {
+                },"profile_favorites": {
                   Row: {
-                    "avatar_config": Json | null,"avatar_mode": string,"avatar_url": string | null,"bio": string | null,"created_at": string,"id": string,"name": string,"pet": string | null,"updated_at": string
+                    "book_id": string,"position": number,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_config"?: Json | null,"avatar_mode"?: string,"avatar_url"?: string | null,"bio"?: string | null,"created_at"?: string,"id": string,"name"?: string,"pet"?: string | null,"updated_at"?: string
+                    "book_id": string,"position": number,"user_id"?: string
                   }
                   Update: {
-                    "avatar_config"?: Json | null,"avatar_mode"?: string,"avatar_url"?: string | null,"bio"?: string | null,"created_at"?: string,"id"?: string,"name"?: string,"pet"?: string | null,"updated_at"?: string
+                    "book_id"?: string,"position"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "profile_favorites_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "profile_favorites_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profiles": {
+                  Row: {
+                    "archetype": string | null,"avatar_config": Json | null,"avatar_mode": string,"avatar_url": string | null,"bio": string | null,"cover_url": string | null,"created_at": string,"favorite_genres": (string)[],"id": string,"name": string,"notifications_seen_at": string,"onboarded_at": string | null,"pet": string | null,"reading_goal": number | null,"show_followers": boolean,"tagline": string | null,"theme": string,"updated_at": string,"username": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "archetype"?: string | null,"avatar_config"?: Json | null,"avatar_mode"?: string,"avatar_url"?: string | null,"bio"?: string | null,"cover_url"?: string | null,"created_at"?: string,"favorite_genres"?: (string)[],"id": string,"name"?: string,"notifications_seen_at"?: string,"onboarded_at"?: string | null,"pet"?: string | null,"reading_goal"?: number | null,"show_followers"?: boolean,"tagline"?: string | null,"theme"?: string,"updated_at"?: string,"username"?: string | null
+                  }
+                  Update: {
+                    "archetype"?: string | null,"avatar_config"?: Json | null,"avatar_mode"?: string,"avatar_url"?: string | null,"bio"?: string | null,"cover_url"?: string | null,"created_at"?: string,"favorite_genres"?: (string)[],"id"?: string,"name"?: string,"notifications_seen_at"?: string,"onboarded_at"?: string | null,"pet"?: string | null,"reading_goal"?: number | null,"show_followers"?: boolean,"tagline"?: string | null,"theme"?: string,"updated_at"?: string,"username"?: string | null
                   }
                   Relationships: [
                     
@@ -227,16 +357,62 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"user_books": {
+                },"shelf_books": {
                   Row: {
-                    "book_id": string,"comment": string | null,"created_at": string,"current_page": number | null,"favorite_character": string | null,"favorite_quote": string | null,"finished_on": string | null,"id": string,"rank_characters": number | null,"rank_ending": number | null,"rank_plot": number | null,"rank_writing": number | null,"started_on": string,"updated_at": string,"user_id": string
+                    "added_at": string,"book_id": string,"shelf_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "book_id": string,"comment"?: string | null,"created_at"?: string,"current_page"?: number | null,"favorite_character"?: string | null,"favorite_quote"?: string | null,"finished_on"?: string | null,"id"?: string,"rank_characters"?: number | null,"rank_ending"?: number | null,"rank_plot"?: number | null,"rank_writing"?: number | null,"started_on": string,"updated_at"?: string,"user_id"?: string
+                    "added_at"?: string,"book_id": string,"shelf_id": string
                   }
                   Update: {
-                    "book_id"?: string,"comment"?: string | null,"created_at"?: string,"current_page"?: number | null,"favorite_character"?: string | null,"favorite_quote"?: string | null,"finished_on"?: string | null,"id"?: string,"rank_characters"?: number | null,"rank_ending"?: number | null,"rank_plot"?: number | null,"rank_writing"?: number | null,"started_on"?: string,"updated_at"?: string,"user_id"?: string
+                    "added_at"?: string,"book_id"?: string,"shelf_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shelf_books_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "shelf_books_shelf_id_fkey"
+      columns: ["shelf_id"]
+isOneToOne: false
+      referencedRelation: "shelves"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"shelves": {
+                  Row: {
+                    "color": string,"created_at": string,"id": string,"name": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "color"?: string,"created_at"?: string,"id"?: string,"name": string,"user_id"?: string
+                  }
+                  Update: {
+                    "color"?: string,"created_at"?: string,"id"?: string,"name"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shelves_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"user_books": {
+                  Row: {
+                    "book_id": string,"comment": string | null,"created_at": string,"current_page": number | null,"favorite_character": string | null,"favorite_quote": string | null,"finished_on": string | null,"format": string | null,"id": string,"rank_characters": number | null,"rank_ending": number | null,"rank_plot": number | null,"rank_writing": number | null,"started_on": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "book_id": string,"comment"?: string | null,"created_at"?: string,"current_page"?: number | null,"favorite_character"?: string | null,"favorite_quote"?: string | null,"finished_on"?: string | null,"format"?: string | null,"id"?: string,"rank_characters"?: number | null,"rank_ending"?: number | null,"rank_plot"?: number | null,"rank_writing"?: number | null,"started_on": string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Update: {
+                    "book_id"?: string,"comment"?: string | null,"created_at"?: string,"current_page"?: number | null,"favorite_character"?: string | null,"favorite_quote"?: string | null,"finished_on"?: string | null,"format"?: string | null,"id"?: string,"rank_characters"?: number | null,"rank_ending"?: number | null,"rank_plot"?: number | null,"rank_writing"?: number | null,"started_on"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -270,6 +446,7 @@ isOneToOne: false
               "cover_url": string | null,
 "created_at": string,
 "created_by": string | null,
+"description": string | null,
 "id": string,
 "invite_code": string,
 "name": string
@@ -291,6 +468,7 @@ isOneToOne: false
               "book_id": string,
 "club_id": string,
 "created_at": string,
+"due_on": string | null,
 "edition_number": number | null,
 "finished_on": string | null,
 "id": string,
@@ -322,6 +500,7 @@ isOneToOne: false
               "cover_url": string | null,
 "created_at": string,
 "created_by": string | null,
+"description": string | null,
 "id": string,
 "invite_code": string,
 "name": string
@@ -332,11 +511,20 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"my_notifications":
+{ Args: { "p_limit"?: number }; Returns: {
+              "actor_id": string,"body": string,"created_at": string,"kind": string,"post_id": string
+            }[]
+                           },
+"owns_shelf":
+{ Args: { "p_shelf_id": string }; Returns: boolean
+                           },
 "propose_club_book":
 { Args: { "p_book_id": string,"p_club_id": string }; Returns: {
               "book_id": string,
 "club_id": string,
 "created_at": string,
+"due_on": string | null,
 "edition_number": number | null,
 "finished_on": string | null,
 "id": string,
@@ -356,6 +544,9 @@ isOneToOne: false
                            },
 "regenerate_invite_code":
 { Args: { "p_club_id": string }; Returns: string
+                           },
+"set_club_book_due":
+{ Args: { "p_club_book_id": string,"p_due_on": string }; Returns: undefined
                            },
 "upsert_book":
 { Args: { "p_author"?: string,"p_cover_url"?: string,"p_pages"?: number,"p_summary"?: string,"p_title": string,"p_work_key": string }; Returns: {

@@ -4,6 +4,8 @@ export const AVATAR_ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/h
 
 /** Capa do clube: proporção de livro (2:3). */
 export const CLUB_COVER_SIZE = { width: 600, height: 900 }
+/** Capa do perfil e do clube: paisagem, como no topo das telas. */
+export const PROFILE_COVER_SIZE = { width: 1200, height: 600 }
 
 /** Recorte centralizado na proporção pedida (como object-fit: cover). */
 export function aspectCrop(width: number, height: number, ratio: number) {

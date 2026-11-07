@@ -1,46 +1,59 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Avatar, avatarOf } from '@/components/ui/Avatar'
 import { BookCover } from '@/components/ui/BookCover'
 import { Stars } from '@/components/ui/Stars'
-import { formatDayMonth } from '@/lib/dates'
+import { Quote } from '@/components/ui/Typography'
+import { formatDayMonthShort } from '@/lib/dates'
 import { memberAverage } from '@/lib/domain/ratings'
 import type { FeedPost } from './api'
 
-/** Post do feed: avatar e nome cursivo, carimbo "terminou", capa, título, autor, nota e comentário. */
-export function PostCard({ post }: { post: FeedPost }) {
+/** Ficha no feed: quem avaliou, capa, título, nota e o comentário (ou a citação favorita). */
+export function PostCard({ post, footer }: { post: FeedPost; footer?: ReactNode }) {
   const reading = post.reading
   const book = reading?.book
   if (!reading || !book) return null
   const average = memberAverage(reading)
   const name = post.author?.name || 'Alguém'
   const firstName = name.split(/\s+/)[0]
+  const text = reading.comment ?? reading.favorite_quote
 
   return (
-    <article className="flex flex-col gap-2 rounded-card border border-primary bg-card p-3">
+    <article className="rounded-card border border-line bg-card p-4">
       <div className="flex items-center gap-2.5">
         <Avatar {...(post.author ? avatarOf(post.author) : { name })} size="xs" />
-        <p className="min-w-0 flex-1 truncate font-script text-title-md leading-tight" title={name}>
-          {firstName}
+        <p className="m-0 min-w-0 truncate font-sans text-sm font-semibold" title={name}>
+          {post.author ? (
+            <Link to={`/pessoas/${post.author.id}`} className="text-ink no-underline hover:underline">
+              {firstName}
+            </Link>
+          ) : (
+            firstName
+          )}{' '}
+          <span className="font-normal text-muted">avaliou</span>
         </p>
         {reading.finished_on && (
-          <span className="rounded-xs bg-pill px-1.5 py-0.5 font-mono font-bold text-2xs uppercase tracking-label">
-            terminou <time dateTime={reading.finished_on}>{formatDayMonth(reading.finished_on)}</time>
-          </span>
+          <time dateTime={reading.finished_on} className="ml-auto shrink-0 font-sans text-2xs font-semibold uppercase tracking-label text-muted">
+            {formatDayMonthShort(reading.finished_on)}
+          </time>
         )}
       </div>
-      <div className="flex gap-3">
-        <BookCover title={book.title} url={book.cover_url} size="feed" decorative framed={false} className="border-thick border-primary" />
+      <div className="mt-3 flex gap-3.5">
+        <Link to={`/livros/${book.id}`} tabIndex={-1} aria-hidden="true">
+          <BookCover title={book.title} url={book.cover_url} size="feed" decorative />
+        </Link>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h2 className="font-type font-normal text-sm leading-tight break-words">
-            <Link to={`/livros/${book.id}`} className="no-underline hover:underline underline-offset-4">
+          <h2 className="m-0 font-display italic font-semibold text-xl leading-tight break-words">
+            <Link to={`/livros/${book.id}`} className="text-ink no-underline hover:underline">
               {book.title}
             </Link>
           </h2>
-          {book.author && <p className="font-hand text-base leading-none">{book.author}</p>}
-          <Stars value={average} size="md" label={average == null ? 'Sem nota' : undefined} />
-          {reading.comment && <p className="font-hand text-sm leading-tight break-words">{reading.comment}</p>}
+          {book.author && <p className="m-0 font-serif italic text-sm text-muted">{book.author}</p>}
+          <Stars value={average} size="sm" label={average == null ? 'Sem nota' : undefined} className="mt-0.5" />
+          {text && <Quote className="mt-1.5 break-words">{text}</Quote>}
         </div>
       </div>
+      {footer && <div className="mt-3 flex items-center gap-4.5 font-sans text-xs font-semibold text-muted">{footer}</div>}
     </article>
   )
 }

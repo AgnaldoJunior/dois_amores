@@ -12,7 +12,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'fonts/*.ttf'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'fonts/*.woff2', 'fonts/*.ttf'],
       manifest: {
         name: 'Dois Amores · clube do livro',
         short_name: 'Dois Amores',
@@ -37,7 +37,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,ttf,webmanifest}'],
         // O gerador de PDF (~1,2 MB) não é pré-baixado: só quem exporta a revista precisa dele.
         globIgnores: ['**/react-pdf*.js', '**/template-*.js'],
         navigateFallback: '/index.html',

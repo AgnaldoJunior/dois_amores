@@ -46,11 +46,11 @@ export function ClubSuggestionsPage() {
       <ShelfFavorites clubId={clubId} />
 
       <SectionTitle>Ideias da IA</SectionTitle>
-      <p className="-mt-2 font-hand text-md text-accentStrong">
+      <p className="-mt-2 font-serif italic text-md text-primary">
         sugerido por IA a partir dos livros do clube e das notas de cada membro; cada livro foi conferido na Open Library
       </p>
 
-      {isFetching && <p className="font-hand text-lg text-primary">Pensando no gosto de todo mundo…</p>}
+      {isFetching && <p className="font-serif italic text-lg text-primary">Pensando no gosto de todo mundo…</p>}
       {message && <FormMessage tone="error">{message}</FormMessage>}
       {!isFetching && data?.length === 0 && (
         <FormMessage tone="success">Não encontramos sugestões confirmadas desta vez. Tente gerar outras.</FormMessage>
@@ -87,7 +87,7 @@ function ShelfFavorites({ clubId }: { clubId: string }) {
       <SectionTitle>
         <span id="shelf-favorites">Das estantes</span>
       </SectionTitle>
-      <p className="-mt-1.5 text-center font-hand text-md">os favoritos das estantes de vocês, fora do clube</p>
+      <p className="-mt-1.5 text-center font-serif italic text-md">os favoritos das estantes de vocês, fora do clube</p>
       {favorites.length === 0 ? (
         <EmptyState>Quando alguém do clube terminar um livro por conta própria, ele aparece aqui.</EmptyState>
       ) : (
@@ -119,8 +119,8 @@ function ShelfFavoriteCard({ clubId, favorite }: { clubId: string; favorite: She
     <article className="flex gap-3 rounded-card border border-primary bg-card p-2.5">
       <BookCover title={book.title} url={book.cover_url} size="feed" decorative />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h3 className="font-type font-normal text-sm leading-tight">{book.title}</h3>
-        {book.author && <p className="font-hand text-md leading-none">{book.author}</p>}
+        <h3 className="font-display italic font-semibold text-sm leading-tight">{book.title}</h3>
+        {book.author && <p className="font-serif italic text-md leading-none">{book.author}</p>}
         <div className="flex flex-wrap items-center gap-1.5">
           <Stars value={favorite.average} size="sm" />
           <Label className="text-2xs">
@@ -128,7 +128,7 @@ function ShelfFavoriteCard({ clubId, favorite }: { clubId: string; favorite: She
           </Label>
         </div>
         {propose.isSuccess ? (
-          <p role="status" className="font-hand text-md">✓ proposto ao clube</p>
+          <p role="status" className="font-serif italic text-md">✓ proposto ao clube</p>
         ) : (
           <Button variant="secondary" fullWidth={false} onClick={onPropose} loading={propose.isPending} className="self-start min-h-button-sm-h text-2xs">
             propor ao clube
@@ -156,15 +156,15 @@ function ClubSuggestionCard({ clubId, suggestion }: { clubId: string; suggestion
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex gap-3">
-        <BookCover title={suggestion.title} url={suggestion.coverUrl} size="sm" decorative />
+        <BookCover title={suggestion.title} url={suggestion.coverUrl} size="list" decorative />
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-          <h2 className="font-type font-normal text-md leading-tight text-primary">{suggestion.title}</h2>
-          {suggestion.author && <p className="font-hand text-md leading-none text-primary">{suggestion.author}</p>}
+          <h2 className="font-display italic font-semibold text-md leading-tight text-primary">{suggestion.title}</h2>
+          {suggestion.author && <p className="font-serif italic text-md leading-none text-primary">{suggestion.author}</p>}
           {suggestion.reason && <HandText>{suggestion.reason}</HandText>}
         </div>
       </div>
       {propose.isSuccess ? (
-        <p role="status" className="font-hand text-md text-primary">
+        <p role="status" className="font-serif italic text-md text-primary">
           ✓ Proposto ao clube. Agora é esperar os votos!
         </p>
       ) : (

@@ -1,11 +1,35 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { supabase, type Tables } from '@/lib/supabase'
-import { resizeAvatar } from './imageResize'
+import { PROFILE_COVER_SIZE, resizeAvatar, resizeImage } from './imageResize'
 
-export type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'avatar_url' | 'bio' | 'pet' | 'avatar_mode' | 'avatar_config'>
+export type Profile = Pick<
+  Tables<'profiles'>,
+  | 'id'
+  | 'name'
+  | 'avatar_url'
+  | 'bio'
+  | 'pet'
+  | 'avatar_mode'
+  | 'avatar_config'
+  | 'username'
+  | 'tagline'
+  | 'cover_url'
+  | 'reading_goal'
+  | 'theme'
+  | 'show_followers'
+  | 'favorite_genres'
+  | 'archetype'
+  | 'onboarded_at'
+  | 'notifications_seen_at'
+>
 
-const PROFILE_FIELDS = 'id, name, avatar_url, bio, pet, avatar_mode, avatar_config'
+/** Campos que a própria pessoa edita no perfil. */
+export type ProfileChanges = Partial<Omit<Profile, 'id'>>
+
+export const PROFILE_FIELDS =
+  'id, name, avatar_url, bio, pet, avatar_mode, avatar_config, username, tagline, cover_url, reading_goal, theme, ' +
+  'show_followers, favorite_genres, archetype, onboarded_at, notifications_seen_at'
 
 export const profileKeys = {
   detail: (userId: string) => ['profile', userId] as const,
@@ -22,7 +46,7 @@ export function useProfile() {
         .eq('id', user.id)
         .single()
       if (error) throw error
-      return data
+      return data as unknown as Profile
     },
   })
 }
@@ -31,7 +55,7 @@ export function useUpdateProfile() {
   const user = useCurrentUser()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (changes: Partial<Pick<Profile, 'name' | 'bio' | 'avatar_url' | 'pet' | 'avatar_mode' | 'avatar_config'>>) => {
+    mutationFn: async (changes: ProfileChanges) => {
       const { data, error } = await supabase
         .from('profiles')
         .update(changes)
@@ -39,7 +63,7 @@ export function useUpdateProfile() {
         .select(PROFILE_FIELDS)
         .single()
       if (error) throw error
-      return data
+      return data as unknown as Profile
     },
     onSuccess: (profile) => queryClient.setQueryData(profileKeys.detail(user.id), profile),
   })
@@ -73,4 +97,24 @@ export async function deleteMyAccount(userId: string) {
   const { error } = await supabase.rpc('delete_my_account')
   if (error) throw error
   await supabase.auth.signOut({ scope: 'local' })
+}
+
+const coverPath = (userId: string) => `${userId}/cover.jpg`
+
+/** Capa do perfil (paisagem 3:1, sem EXIF) em avatars/<uid>/cover.jpg. */
+export function useUploadCover() {
+  const user = useCurrentUser()
+  const update = useUpdateProfile()
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const blob = await resizeImage(file, PROFILE_COVER_SIZE)
+      const path = coverPath(user.id)
+      const { error } = await supabase.storage
+        .from('avatars')
+        .upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' })
+      if (error) throw error
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+      return update.mutateAsync({ cover_url: `${data.publicUrl}?v=${Date.now()}` })
+    },
+  })
 }

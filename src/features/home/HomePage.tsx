@@ -1,35 +1,95 @@
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { Avatar, avatarOf } from '@/components/ui/Avatar'
-import { ButtonLink } from '@/components/ui/Button'
+import { Button } from '@/components/ui/Button'
 import { BookCover } from '@/components/ui/BookCover'
-import { Icon } from '@/components/ui/Icon'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormMessage } from '@/components/ui/FormMessage'
-import { Stars } from '@/components/ui/Stars'
-import { StatTiles } from '@/components/ui/StatTiles'
-import { BookTitle, HandText, Label, SectionTitle } from '@/components/ui/Typography'
-import { formatDayMonth } from '@/lib/dates'
-import { formatEdition } from '@/lib/domain/clubs'
-import { memberAverage } from '@/lib/domain/ratings'
-import { formatCount } from '@/lib/domain/stats'
-import { useMyClubBooks, useMyClubs } from '@/features/clubs/api'
-import { clubBookPath } from '@/features/clubs/ClubReviewPage'
-import { clubPath } from '@/features/clubs/ClubsPage'
+import { Icon, type IconName } from '@/components/ui/Icon'
+import { Eyebrow } from '@/components/ui/Typography'
+import { useFeed, useFriendsReadingNow, type FeedPost } from '@/features/feed/api'
+import { PostActions } from '@/features/feed/PostActions'
+import { PostCard } from '@/features/feed/PostCard'
+import { useNotifications } from '@/features/notifications/api'
 import { useProfile } from '@/features/profile/api'
-import { useMyStats, useRecentReadings, type Reading } from '@/features/readings/api'
 import { ProgressCard } from '@/features/readings/ProgressCard'
 import { useShelf } from '@/features/shelf/api'
+import { todayIso } from '@/lib/dates'
+import { pickOfTheDay } from '@/lib/domain/year'
 
-/** "Lendo agora": leituras em andamento com a barra de progresso. */
-function ReadingNow() {
+type Filter = 'tudo' | 'resenhas'
+
+/** Ícone redondo do topo (buscar, descobrir, novidades). */
+function TopIcon({ to, icon, label }: { to: string; icon: IconName; label: string }) {
+  return (
+    <Link to={to} aria-label={label} className="flex size-11 items-center justify-center text-primary">
+      <Icon name={icon} className="size-icon" />
+    </Link>
+  )
+}
+
+/** Sino com o pontinho rosa quando há novidades desde a última visita. */
+function NotificationsBell() {
+  const { data: profile } = useProfile()
+  const { data } = useNotifications()
+  const fresh = data?.some((n) => !profile?.notifications_seen_at || n.created_at > profile.notifications_seen_at) ?? false
+  return (
+    <Link to="/notificacoes" aria-label={fresh ? 'Novidades (há novas)' : 'Novidades'} className="relative flex size-11 items-center justify-center text-primary">
+      <Icon name="bell" />
+      {fresh && <span aria-hidden="true" className="absolute top-2.5 right-2.5 size-2 rounded-full border border-page bg-accent" />}
+    </Link>
+  )
+}
+
+/** "Citação do dia": uma das citações favoritas das fichas do feed, a mesma o dia inteiro. */
+function QuoteOfTheDay({ posts }: { posts: FeedPost[] }) {
+  const quotes = posts.filter((p) => p.reading?.favorite_quote && p.reading.book)
+  const pick = pickOfTheDay(quotes, todayIso())
+  if (!pick) return null
+  const reading = pick.reading!
+  return (
+    <figure className="rise m-0 rounded-card bg-primary px-4.5 py-4 text-inverse">
+      <Eyebrow className="text-blush">citação do dia</Eyebrow>
+      <blockquote className="m-0 mt-2.5 font-serif italic text-2xl leading-snug">“{reading.favorite_quote}”</blockquote>
+      <figcaption className="mt-2.5 font-sans text-2xs font-semibold tracking-wide text-blush lowercase">
+        {[reading.book!.title, reading.book!.author].filter(Boolean).join(' · ')}
+      </figcaption>
+    </figure>
+  )
+}
+
+/** "Lendo agora entre amigos": capas do que as outras pessoas estão lendo. */
+function FriendsReading() {
+  const { data } = useFriendsReadingNow()
+  if (!data || data.length === 0) return null
+  return (
+    <section aria-labelledby="friends-reading" className="flex flex-col gap-3">
+      <Eyebrow>
+        <span id="friends-reading">lendo agora entre amigos</span>
+      </Eyebrow>
+      <ul className="no-scrollbar -mx-6 flex gap-4 overflow-x-auto px-6">
+        {data.map((r) => (
+          <li key={r.id} className="shrink-0 text-center">
+            <Link to={`/livros/${r.book.id}`} className="flex flex-col items-center gap-2 no-underline" aria-label={`${r.user.name} está lendo ${r.book.title}`}>
+              <BookCover title={r.book.title} url={r.book.cover_url} size="friend" decorative />
+              <span className="font-serif italic text-sm text-ink">{r.user.name.split(/\s+/)[0]?.toLowerCase()}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+/** "Você está lendo": a própria leitura em andamento, com a página atual. */
+function MyReading() {
   const { data: shelf } = useShelf()
   const reading = shelf?.reading ?? []
   if (reading.length === 0) return null
   return (
     <section className="flex flex-col gap-2.5" aria-labelledby="reading-now">
-      <SectionTitle>
-        <span id="reading-now">Lendo agora</span>
-      </SectionTitle>
+      <Eyebrow>
+        <span id="reading-now">você está lendo</span>
+      </Eyebrow>
       <ul className="flex flex-col gap-2.5">
         {reading.map((r) => (
           <li key={r.id}>
@@ -41,116 +101,88 @@ function ReadingNow() {
   )
 }
 
-/** Ingresso verde com o livro que cada clube está lendo agora, e o atalho para o ranking. */
-function ClubNow() {
-  const { data: books } = useMyClubBooks()
-  const { data: clubs } = useMyClubs()
-  const reading = books?.filter((b) => b.status === 'reading') ?? []
-  if (reading.length === 0) return null
-  const multi = (clubs?.length ?? 0) > 1
-  return (
-    <ul aria-label="Leituras dos clubes" className="flex flex-col gap-2">
-      {reading.map((cb) => {
-        const club = clubs?.find((c) => c.id === cb.club_id)
-        const label = ['no clube agora', multi && club?.name, formatEdition(cb.edition_number)].filter(Boolean).join(' · ')
-        return (
-          <li key={cb.id} className="flex flex-col gap-1">
-            <Link
-              to={clubBookPath(cb.club_id, cb.id)}
-              className="ticket flex items-center gap-3 bg-primary px-7 py-3 text-inverse no-underline hover:text-inverse"
-            >
-              <BookCover title={cb.book.title} url={cb.book.cover_url} size="xs" decorative framed={false} className="tilt-l2 border-thick border-inverse" />
-              <span className="flex min-w-0 flex-col">
-                <span className="font-mono font-bold text-2xs uppercase tracking-label text-pill">{label}</span>
-                <span className="font-display text-xl leading-none">{cb.book.title}</span>
-              </span>
-            </Link>
-            <Link to={`${clubPath(cb.club_id)}/ranking`} className="self-end font-hand text-md underline underline-offset-4">
-              ver o ranking do clube
-            </Link>
-          </li>
-        )
-      })}
-    </ul>
-  )
-}
-
-const count = (n: number | undefined) => (n === undefined ? '–' : formatCount(n))
-
-function RecentReading({ reading }: { reading: Reading }) {
-  const average = memberAverage(reading)
-  return (
-    <Link to={`/livros/${reading.book.id}`} className="flex gap-3.5 rounded-card border border-primary bg-card p-3 no-underline">
-      <BookCover title={reading.book.title} url={reading.book.cover_url} size="stamp" stamp decorative />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <BookTitle>{reading.book.title}</BookTitle>
-        {reading.book.author && <span className="font-hand text-md leading-none">{reading.book.author}</span>}
-        {reading.finished_on ? (
-          <>
-            <Stars value={average} size="md" />
-            <Label className="text-2xs">terminou em {formatDayMonth(reading.finished_on)}</Label>
-          </>
-        ) : (
-          <Label className="text-2xs">Em andamento</Label>
-        )}
-        {reading.comment && <HandText>“{reading.comment}”</HandText>}
-      </div>
-    </Link>
-  )
-}
-
+/** Início: citação do dia, o que as amigas estão lendo e o feed de fichas. */
 export function HomePage() {
   const location = useLocation()
   const flash = (location.state as { flash?: string } | null)?.flash
   const { data: profile } = useProfile()
-  const { data: stats } = useMyStats()
-  const { data: recent, isLoading: recentLoading } = useRecentReadings()
-  const firstName = profile?.name.split(/\s+/)[0] ?? ''
+  const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage, refetch } = useFeed()
+  const [filter, setFilter] = useState<Filter>('tudo')
+  const posts = data?.pages.flat() ?? []
+  const shown = filter === 'resenhas' ? posts.filter((p) => p.reading?.comment) : posts
+  const firstName = profile?.name.split(/\s+/)[0]?.toLowerCase()
 
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex flex-col">
-          <Label className="text-xs">dois amores · clube do livro</Label>
-          <h1 className="font-hand font-normal text-4xl leading-tight">{firstName ? `Olá, ${firstName}!` : 'Olá!'}</h1>
-        </div>
-        <Link to="/perfil" aria-label="Abrir meu perfil" className="rounded-full">
-          <Avatar {...avatarOf(profile ?? { name: '' })} size="md" />
-        </Link>
+    <div className="relative flex flex-col gap-5">
+      <span aria-hidden="true" className="twinkle twinkle-late top-14 right-28 text-2xs">✧</span>
+      <header className="flex items-center justify-between">
+        <h1 className="m-0 font-sans text-base font-semibold text-ink">{firstName ? `olá, ${firstName}` : 'olá!'}</h1>
+        <nav aria-label="Atalhos" className="-mr-3 flex">
+          <TopIcon to="/buscar" icon="search" label="Buscar livro" />
+          <TopIcon to="/descobrir" icon="sparkle" label="Descobrir livros" />
+          <NotificationsBell />
+          <Link to="/publicar" aria-label="Publicar leitura" className="flex size-11 items-center justify-center text-primary">
+            <Icon name="plus" />
+          </Link>
+        </nav>
       </header>
 
       {flash && <FormMessage tone="success">{flash}</FormMessage>}
 
-      <StatTiles
-        label="Suas estatísticas"
-        items={[
-          { value: count(stats?.booksRead), label: 'Livros lidos' },
-          { value: count(stats?.pagesRead), label: 'Páginas lidas' },
-          { value: count(stats?.clubs), label: stats?.clubs === 1 ? 'Clube' : 'Clubes' },
-        ]}
-      />
+      <QuoteOfTheDay posts={posts} />
+      <MyReading />
+      <FriendsReading />
 
-      <ButtonLink to="/publicar">
-        <Icon name="plus" className="size-icon-sm" />
-        Publicar nova leitura
-      </ButtonLink>
+      <section aria-labelledby="feed-title" className="flex flex-col gap-3">
+        <h2 id="feed-title" className="sr-only">
+          Fichas das amigas
+        </h2>
+        <div role="group" aria-label="Filtrar o feed" className="flex gap-1.5">
+          {(['tudo', 'resenhas'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              aria-pressed={filter === f}
+              onClick={() => setFilter(f)}
+              className={
+                'h-chip-h rounded-full border px-3.5 font-sans text-xs font-semibold ' +
+                (filter === f ? 'border-primary bg-primary text-inverse' : 'border-border bg-card text-ink')
+              }
+            >
+              {f}
+            </button>
+          ))}
+        </div>
 
-      <ReadingNow />
+        {isLoading && <p className="m-0 font-serif italic text-md text-muted">abrindo as fichas…</p>}
+        {isError && (
+          <>
+            <FormMessage tone="error">Não foi possível carregar o feed.</FormMessage>
+            <Button variant="outline" onClick={() => refetch()}>
+              tentar de novo
+            </Button>
+          </>
+        )}
+        {!isLoading && !isError && posts.length === 0 && (
+          <EmptyState title="nada por aqui ainda" icon="book">
+            Ninguém terminou um livro ainda. Que tal ser a primeira pessoa?
+          </EmptyState>
+        )}
 
-      <ClubNow />
+        <ul className="flex flex-col gap-3" aria-label="Leituras concluídas">
+          {shown.map((post) => (
+            <li key={post.id}>
+              <PostCard post={post} footer={<PostActions post={post} />} />
+            </li>
+          ))}
+        </ul>
 
-      <section className="flex flex-col gap-2.5">
-        <SectionTitle>Leituras recentes</SectionTitle>
-        {!recentLoading && (!recent || recent.length === 0) ? (
-          <EmptyState>Suas leituras vão aparecer aqui.</EmptyState>
+        {hasNextPage ? (
+          <Button variant="outline" onClick={() => fetchNextPage()} loading={isFetchingNextPage}>
+            carregar mais
+          </Button>
         ) : (
-          <ul className="flex flex-col gap-3">
-            {recent?.map((r) => (
-              <li key={r.id}>
-                <RecentReading reading={r} />
-              </li>
-            ))}
-          </ul>
+          posts.length > 0 && <p className="m-0 text-center font-serif italic text-base text-muted">você está em dia ✦</p>
         )}
       </section>
     </div>

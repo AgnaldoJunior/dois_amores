@@ -6,37 +6,42 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { Stars } from '@/components/ui/Stars'
-import { HandText, Label } from '@/components/ui/Typography'
+import { Label } from '@/components/ui/Typography'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { proposalState } from '@/lib/domain/clubs'
 import { useVote, useWithdrawProposal, type ClubBook, type ClubMember } from './api'
 
-/** Livro do clube de pé na prateleira: capa, tábua e, embaixo, nota e edição. */
-export function ClubBookTile({ clubBook, to, average, footer }: { clubBook: { book: { id: string; title: string; cover_url: string | null } }; to?: string; average?: number | null; footer?: ReactNode }) {
+/** Livro do clube na prateleira: capa de pé, nota e edição embaixo. */
+export function ClubBookTile({
+  clubBook,
+  to,
+  average,
+  footer,
+}: {
+  clubBook: { book: { id: string; title: string; cover_url: string | null } }
+  to?: string
+  average?: number | null
+  footer?: ReactNode
+}) {
   return (
-    <li className="flex shrink-0 flex-col justify-end">
-      <Link to={to ?? `/livros/${clubBook.book.id}`} className="relative z-1 block px-1" aria-label={clubBook.book.title}>
-        <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="feed" decorative framed={false} className="shadow-spine" />
+    <li className="flex w-cover-feed-w shrink-0 flex-col items-center gap-1.5">
+      <Link to={to ?? `/livros/${clubBook.book.id}`} className="block" aria-label={clubBook.book.title}>
+        <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="feed" decorative />
       </Link>
-      <span aria-hidden="true" className="plank -mt-0.5 rounded-none" />
-      <div className="flex flex-col items-center gap-0.5 px-1 pt-1">
-        {average !== undefined && <Stars value={average} size="xs" className="gap-px" />}
-        {footer}
-      </div>
+      {average !== undefined && <Stars value={average} size="xs" className="gap-px" />}
+      {footer}
     </li>
   )
 }
 
-/** Prateleira horizontal (rola de lado quando não cabe); a tábua continua até o fim da linha. */
+/** Prateleira horizontal (rola de lado quando não cabe) com a tábua embaixo das capas. */
 export function ClubBookGrid({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <ul aria-label={label} className="flex items-stretch overflow-x-auto pb-1">
-      {children}
-      <li aria-hidden="true" className="flex min-w-4 flex-1 flex-col justify-end">
-        <span className="plank rounded-none" />
-        <span className="min-h-star-lg" />
-      </li>
-    </ul>
+    <div className="flex flex-col">
+      <ul aria-label={label} className="no-scrollbar -mx-6 flex items-start gap-3 overflow-x-auto px-6 pb-1">
+        {children}
+      </ul>
+    </div>
   )
 }
 
@@ -59,13 +64,14 @@ export function ProposalCard({ clubBook, members }: { clubBook: ClubBook; member
   }
 
   return (
-    <Card className="flex flex-col gap-3 p-3">
-      <div className="flex gap-3">
-        <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="stamp" stamp decorative />
+    <Card className="flex flex-col gap-3 p-3.5">
+      <div className="flex gap-3.5">
+        <BookCover title={clubBook.book.title} url={clubBook.book.cover_url} size="feed" decorative />
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-          <h3 className="font-type font-normal text-md leading-tight">{clubBook.book.title}</h3>
-          {clubBook.book.author && <p className="font-hand text-md leading-none">{clubBook.book.author}</p>}
-          {proposer && <HandText className="text-accentStrong">Proposto por {proposer}</HandText>}
+          {proposer && <Label className="text-primary">sugerido por {proposer.split(/\s+/)[0]?.toLowerCase()}</Label>}
+          <h3 className="m-0 font-display italic font-semibold text-xl leading-tight">{clubBook.book.title}</h3>
+          {clubBook.book.author && <p className="m-0 font-serif italic text-sm text-muted">{clubBook.book.author}</p>}
+          {proposer && <span className="sr-only">Proposto por {proposer}</span>}
         </div>
       </div>
       <ul aria-label="Votos" className="flex flex-wrap gap-1.5">
@@ -79,52 +85,54 @@ export function ProposalCard({ clubBook, members }: { clubBook: ClubBook; member
               <li
                 key={m.user_id}
                 className={
-                  'flex items-center gap-1 rounded-full border border-primary py-0.5 pr-2 pl-0.5 font-hand text-sm ' +
-                  (v?.approved ? 'bg-primary text-inverse' : 'bg-page')
+                  'flex items-center gap-1.5 rounded-full border py-0.5 pr-2.5 pl-0.5 font-sans text-xs font-semibold ' +
+                  (v?.approved ? 'border-primary bg-primary text-inverse' : 'border-border bg-card text-ink')
                 }
               >
-                <Avatar {...avatarOf(m.profile)} size="xs" border="thin" />
+                <Avatar {...avatarOf(m.profile)} size="xs" />
                 <span>{m.profile.name.split(/\s+/)[0]}</span>
-                <span aria-hidden="true" className="font-mono font-bold">{mark}</span>
+                <span aria-hidden="true">{mark}</span>
                 <span className="sr-only">{label}</span>
               </li>
             )
           })}
       </ul>
-      <Label className="text-2xs">
+      <Label>
         {state.approved} de {state.total} {state.total === 1 ? 'membro aprovou' : 'membros aprovaram'}
       </Label>
 
       {state.canVote && (
         <div className="grid grid-cols-2 gap-3" role="group" aria-label={`Votar em ${clubBook.book.title}`}>
           <Button
+            size="sm"
             variant={state.myVote === true ? 'primary' : 'outline'}
             aria-pressed={state.myVote === true}
             loading={vote.isPending && vote.variables?.approved === true}
             onClick={() => cast(true)}
           >
-            APROVAR
+            votar ♡
           </Button>
           <Button
+            size="sm"
             variant={state.myVote === false ? 'danger' : 'outline'}
             aria-pressed={state.myVote === false}
             loading={vote.isPending && vote.variables?.approved === false}
             onClick={() => cast(false)}
           >
-            RECUSAR
+            recusar
           </Button>
         </div>
       )}
       {!state.canVote && (
-        <p className="font-hand text-md">Você entrou no clube depois desta proposta e não vota nela.</p>
+        <p className="m-0 font-serif italic text-md text-muted">Você entrou no clube depois desta proposta e não vota nela.</p>
       )}
       {clubBook.proposed_by === user.id && (
         <button
           type="button"
           onClick={() => withdraw.mutate(clubBook.id)}
-          className="self-start font-hand text-md text-primary underline underline-offset-4"
+          className="min-h-11 self-start font-sans text-sm font-semibold text-primary"
         >
-          Retirar proposta
+          retirar sugestão
         </button>
       )}
       {error && <FormMessage tone="error">{error}</FormMessage>}

@@ -7,8 +7,8 @@ export function FormMessage({ tone, children }: { tone: 'error' | 'success'; chi
     <p
       role={tone === 'error' ? 'alert' : 'status'}
       className={
-        'rounded-card border px-4 py-3 font-sans text-sm ' +
-        (tone === 'error' ? 'border-danger text-danger' : 'border-primary bg-card text-primary')
+        'm-0 rounded-card border px-4 py-3 font-sans text-base ' +
+        (tone === 'error' ? 'border-danger bg-card text-danger' : 'border-line bg-petal text-primary')
       }
     >
       {children}

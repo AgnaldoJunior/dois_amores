@@ -2,13 +2,14 @@ import { IllustratedAvatar } from '@/components/IllustratedAvatar'
 import { illustrationOf, type AvatarConfig } from '@/lib/avatar/config'
 
 const sizeClass = {
-  xs: 'size-avatar-xs text-lg',
+  xs: 'size-avatar-xs text-base',
   sm: 'size-avatar-sm text-xl',
   md: 'size-avatar-md text-2xl',
   'podium-3': 'size-avatar-podium-3 text-2xl',
   'podium-2': 'size-avatar-podium-2 text-2xl',
   'podium-1': 'size-avatar-podium-1 text-4xl',
-  lg: 'size-avatar-lg text-5xl',
+  lg: 'size-avatar-lg text-4xl',
+  xl: 'size-avatar-xl text-5xl',
 } as const
 
 export type AvatarSize = keyof typeof sizeClass
@@ -18,7 +19,7 @@ type AvatarProps = {
   url?: string | null
   size?: AvatarSize
   className?: string
-  /** Contorno verde: grosso (padrão) ou fino, para avatares pequenos dentro de botões. */
+  /** Moldura de papel: grossa (avatares grandes sobre fotos) ou nenhuma (padrão nas listas). */
   border?: 'thick' | 'thin'
   /** Avatar ilustrado escolhido no criador (tem prioridade sobre a foto). */
   illustration?: AvatarConfig | null
@@ -33,10 +34,10 @@ export const avatarOf = (profile: ProfileLike) => ({
   illustration: illustrationOf(profile),
 })
 
-/** Avatar ilustrado, foto ou, sem nenhum dos dois, a inicial sobre o rosa — num círculo com contorno verde. */
-export function Avatar({ name, url, size = 'md', className = '', border = 'thick', illustration }: AvatarProps) {
+/** Avatar ilustrado, foto ou, sem nenhum dos dois, a inicial sobre o vinho — num círculo. */
+export function Avatar({ name, url, size = 'md', className = '', border = 'thin', illustration }: AvatarProps) {
   const initial = name.trim().charAt(0).toUpperCase() || '?'
-  const base = `${sizeClass[size]} shrink-0 rounded-full ${border === 'thick' ? 'border-thick' : 'border-thin'} border-primary overflow-hidden`
+  const base = `${sizeClass[size]} shrink-0 rounded-full ${border === 'thick' ? 'border-thick border-page shadow-soft' : ''} overflow-hidden`
   if (illustration) {
     return (
       <span aria-hidden="true" className={`${base} inline-flex bg-page ${className}`}>
@@ -49,7 +50,7 @@ export function Avatar({ name, url, size = 'md', className = '', border = 'thick
   ) : (
     <span
       aria-hidden="true"
-      className={`${base} bg-accent text-primary font-display inline-flex items-center justify-center leading-none ${className}`}
+      className={`${base} bg-primary text-inverse font-display italic font-semibold inline-flex items-center justify-center leading-none ${className}`}
     >
       {initial}
     </span>

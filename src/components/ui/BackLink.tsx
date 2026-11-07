@@ -1,21 +1,23 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Icon } from './Icon'
 
-/** "‹ livros": volta para a tela anterior da hierarquia. */
+/** "‹ estantes": volta para a tela anterior da hierarquia. */
 export function BackLink({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Link
-      to={to}
-      className="inline-flex min-h-11 items-center gap-1 self-start font-mono font-bold text-xs uppercase tracking-label no-underline"
-    >
-      <Icon name="back" className="size-icon-sm" />
+    <Link to={to} className="inline-flex min-h-11 items-center gap-1 self-start font-sans text-base font-semibold text-primary no-underline">
+      <span aria-hidden="true">‹</span>
       {children}
     </Link>
   )
 }
 
-/** Carimbo pequeno e torto no canto da tela ("feito pra você", "book track 2026"). */
-export function CornerNote({ children }: { children: ReactNode }) {
-  return <span className="tilt-l2 font-mono font-bold text-2xs uppercase tracking-label">{children}</span>
+/** Barra do topo das telas internas: voltar à esquerda, título no meio e ação à direita. */
+export function TopBar({ back, title, action }: { back?: { to: string; label: string }; title?: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="grid min-h-11 grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <div>{back && <BackLink to={back.to}>{back.label}</BackLink>}</div>
+      <div className="text-center font-display italic font-semibold text-xl text-ink">{title}</div>
+      <div className="flex justify-end">{action}</div>
+    </div>
+  )
 }

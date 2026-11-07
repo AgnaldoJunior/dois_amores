@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router'
-import { Button, ButtonLink } from '@/components/ui/Button'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router'
+import { Button } from '@/components/ui/Button'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { TextField } from '@/components/ui/TextField'
 import { useAuth } from '@/lib/auth/AuthProvider'
@@ -48,7 +48,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout>
+    <AuthLayout title="oi, leitora">
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <TextField
           label="E-mail"
@@ -68,22 +68,25 @@ export function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
         <TextLink to="/recuperar-senha" className="self-end -mt-1.5">
-          Esqueci minha senha
+          esqueci a senha
         </TextLink>
         <FormMessage tone="error">{error}</FormMessage>
         <Button type="submit" loading={submitting}>
-          Entrar
+          entrar
         </Button>
       </form>
-      <ButtonLink to="/cadastro" variant="secondary">
-        Criar conta
-      </ButtonLink>
       <OrDivider />
-      <Button variant="outline" onClick={onGoogle} loading={googleLoading}>
-        <span aria-hidden="true" className="font-display text-xl leading-none">G</span>
-        Continuar com Google
+      <Button variant="quiet" onClick={onGoogle} loading={googleLoading}>
+        <span aria-hidden="true" className="font-display font-bold text-xl leading-none text-primary">G</span>
+        continuar com Google
       </Button>
-      <TextLink to="/privacidade">Privacidade</TextLink>
+      <p className="m-0 text-center font-sans text-base font-medium">
+        ainda não tem conta?{' '}
+        <Link to="/cadastro" className="font-bold text-primary no-underline">
+          criar conta
+        </Link>
+      </p>
+      <TextLink to="/privacidade">privacidade</TextLink>
     </AuthLayout>
   )
 }

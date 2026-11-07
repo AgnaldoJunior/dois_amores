@@ -9,7 +9,15 @@ import { supabase } from '@/lib/supabase'
 /** Campos do avatar ilustrado (ver src/lib/avatar/config.ts). */
 export type AvatarFields = { avatar_mode?: string | null; avatar_config?: unknown }
 
-export type ClubSummary = { id: string; name: string; cover_url: string | null; memberCount: number }
+export type ClubSummary = {
+  id: string
+  name: string
+  cover_url: string | null
+  memberCount: number
+  members?: { user_id: string; profile: { id: string; name: string; avatar_url: string | null } & AvatarFields }[]
+  /** Livros do clube (status e datas) para a carta da lista: leitura atual e votação aberta. */
+  books?: { status: ClubBookStatus; started_on: string | null; due_on: string | null; book: { title: string; author: string | null } }[]
+}
 
 export type ClubMember = {
   user_id: string
@@ -36,6 +44,7 @@ export type ClubBook = {
   }
   votes: { user_id: string; approved: boolean }[]
   queued_at: string | null
+  due_on: string | null
 }
 
 export type ClubDetail = {
@@ -44,6 +53,7 @@ export type ClubDetail = {
   cover_url: string | null
   invite_code: string
   created_by: string | null
+  description: string | null
   members: ClubMember[]
   books: ClubBook[]
   /** Leituras dos membros para os livros do clube (médias e reviews). */
@@ -65,6 +75,7 @@ export const clubKeys = {
   myBooks: (userId: string) => ['clubs', 'my-books', userId] as const,
   year: (clubId: string, year: number) => ['clubs', 'year', clubId, year] as const,
   shelves: (clubId: string) => ['clubs', 'shelves', clubId] as const,
+  events: (clubId: string) => ['clubs', 'events', clubId] as const,
 }
 
 const RANKS = 'rank_characters, rank_plot, rank_writing, rank_ending'
@@ -77,14 +88,16 @@ export function useMyClubs() {
       // RLS: só aparecem clubes de que a pessoa participa.
       const { data, error } = await supabase
         .from('clubs')
-        .select('id, name, cover_url, created_at, club_members(count)')
+        .select(
+          `id, name, cover_url, created_at,
+           members:club_members(user_id, profile:profiles(id, name, avatar_url, avatar_mode, avatar_config)),
+           books:club_books(status, started_on, due_on, book:books(title, author))`,
+        )
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data.map((c) => ({
-        id: c.id,
-        name: c.name,
-        cover_url: c.cover_url,
-        memberCount: (c.club_members as unknown as { count: number }[])[0]?.count ?? 0,
+      return (data as unknown as (Omit<ClubSummary, 'memberCount'> & { members: NonNullable<ClubSummary['members']> })[]).map((c) => ({
+        ...c,
+        memberCount: c.members.length,
       }))
     },
   })
@@ -97,9 +110,9 @@ export function useClub(clubId: string) {
       const { data, error } = await supabase
         .from('clubs')
         .select(
-          `id, name, cover_url, invite_code, created_by,
+          `id, name, cover_url, invite_code, created_by, description,
            members:club_members(user_id, role, joined_at, profile:profiles(id, name, avatar_url, pet, avatar_mode, avatar_config)),
-           books:club_books(id, status, started_on, finished_on, edition_number, created_at, queued_at, proposed_by,
+           books:club_books(id, status, started_on, finished_on, edition_number, created_at, queued_at, due_on, proposed_by,
              book:books(id, title, author, cover_url, pages, enriched_at),
              votes:club_book_votes(user_id, approved))`,
         )
@@ -359,5 +372,75 @@ export function useLeaveClub(clubId: string) {
       if (error) throw error
     },
     onSuccess: invalidate,
+  })
+}
+
+export type ClubEvent = {
+  id: string
+  title: string
+  notes: string | null
+  happens_on: string
+  created_by: string | null
+}
+
+/** Agenda do clube (encontros, conversas, combinados). */
+export function useClubEvents(clubId: string) {
+  return useQuery({
+    queryKey: clubKeys.events(clubId),
+    queryFn: async (): Promise<ClubEvent[]> => {
+      const { data, error } = await supabase
+        .from('club_events')
+        .select('id, title, notes, happens_on, created_by')
+        .eq('club_id', clubId)
+        .order('happens_on')
+      if (error) throw error
+      return data
+    },
+  })
+}
+
+export function useAddClubEvent(clubId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (event: { title: string; happens_on: string; notes: string | null }) => {
+      const { error } = await supabase.from('club_events').insert({ club_id: clubId, ...event })
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clubKeys.events(clubId) }),
+  })
+}
+
+export function useDeleteClubEvent(clubId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (eventId: string) => {
+      const { error } = await supabase.from('club_events').delete().eq('id', eventId)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clubKeys.events(clubId) }),
+  })
+}
+
+/** Prazo da leitura da vez (qualquer membro ajusta). */
+export function useSetClubBookDue(clubId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ clubBookId, dueOn }: { clubBookId: string; dueOn: string | null }) => {
+      const { error } = await supabase.rpc('set_club_book_due', { p_club_book_id: clubBookId, p_due_on: dueOn as string })
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clubKeys.detail(clubId) }),
+  })
+}
+
+/** Nome e descrição (só a dona). */
+export function useUpdateClubInfo(clubId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (info: { name: string; description: string | null }) => {
+      const { error } = await supabase.from('clubs').update(info).eq('id', clubId)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clubKeys.all }),
   })
 }

@@ -18,10 +18,10 @@
     margin: 0;
     min-height: 100dvh;
     background-color: var(--da-color-page);
-    color: var(--da-color-primary);
-    font-family: var(--da-font-hand);
-    font-size: var(--da-text-lg);
-    line-height: var(--da-leading-tight);
+    color: var(--da-color-ink);
+    font-family: var(--da-font-sans);
+    font-size: var(--da-text-md);
+    line-height: var(--da-leading-relaxed);
   }
 
   input,
@@ -39,78 +39,86 @@
     *,
     *::before,
     *::after {
-      transition-duration: 0s !important;
-      animation-duration: 0s !important;
+      transition: none !important;
+      animation: none !important;
     }
   }
 }
 
-/* Padrões do scrapbook. Valores vêm das variáveis dos tokens (src/theme/tokens.ts). */
+/* Peças da identidade. Valores vêm das variáveis dos tokens (src/theme/tokens.ts). */
 @layer components {
-  /* Selo postal: moldura verde picotada em volta da capa. */
-  .stamp {
-    box-sizing: border-box;
-    flex: none;
-    padding: var(--da-size-stamp-pad);
-    background-color: var(--da-color-primary);
-    background-image: radial-gradient(
-      circle,
-      var(--da-color-page) calc(var(--da-size-stamp-dot) * 0.8),
-      transparent var(--da-size-stamp-dot)
-    );
-    background-size: var(--da-size-stamp-grid) var(--da-size-stamp-grid);
-    background-position: calc(var(--da-size-stamp-grid) / -2) calc(var(--da-size-stamp-grid) / -2);
+  /* Capa de livro: cantos de lombada e sombra interna do lado esquerdo. */
+  .book-cover {
+    border-radius: var(--da-space-0_5) var(--da-space-1) var(--da-space-1) var(--da-space-0_5);
+    box-shadow: var(--da-shadow-cover);
   }
 
-  /* Ingresso: recortes semicirculares nas laterais. */
-  .ticket {
-    --notch: radial-gradient(circle var(--da-size-ticket-notch) at 0 50%, transparent 97%, black);
-    --notch-r: radial-gradient(circle var(--da-size-ticket-notch) at 100% 50%, transparent 97%, black);
-    -webkit-mask:
-      var(--notch) left / 51% 100% no-repeat,
-      var(--notch-r) right / 51% 100% no-repeat;
-    mask:
-      var(--notch) left / 51% 100% no-repeat,
-      var(--notch-r) right / 51% 100% no-repeat;
+  .book-cover-hero {
+    border-radius: var(--da-radius-xs) var(--da-space-2) var(--da-space-2) var(--da-radius-xs);
+    box-shadow: var(--da-shadow-hero);
   }
 
-  /* Listras verticais rosa e creme. */
-  .stripes {
-    background-image: repeating-linear-gradient(
-      90deg,
-      var(--da-color-stripe) 0 var(--da-size-stripe),
-      var(--da-color-stripeLight) var(--da-size-stripe) calc(var(--da-size-stripe) * 2)
-    );
-  }
-
-  /* Tábua da estante, ocupa a linha inteira da grade. */
-  .plank {
-    display: block;
-    grid-column: 1 / -1;
-    height: var(--da-size-plank);
-    margin-top: calc(var(--da-space-2_5) * -1);
+  /* Tábua de madeira clara sob as capas. */
+  .shelf-board {
+    height: var(--da-size-shelf);
     border-radius: var(--da-radius-xs);
-    background-color: var(--da-color-primary);
-    box-shadow: var(--da-shadow-plank);
+    background-image: linear-gradient(180deg, var(--da-color-line), var(--da-color-border));
+    box-shadow: var(--da-shadow-shelf);
   }
 
-  /* Fio rosa dos títulos de seção. */
-  .rule {
-    flex: 1;
-    height: var(--da-border);
-    background-color: var(--da-color-line);
+  /* Estrelinhas douradas que piscam (decorativas). */
+  .twinkle {
+    position: absolute;
+    color: var(--da-color-gold);
+    line-height: 1;
+    pointer-events: none;
+    animation: da-twinkle 3.2s ease-in-out infinite;
   }
+  .twinkle-rose { color: var(--da-color-accent); }
+  .twinkle-late { animation-delay: 1.1s; }
+  .twinkle-later { animation-delay: 2.1s; }
 
-  /* Elementos "colados" levemente tortos. */
-  .tilt-l-half { rotate: calc(var(--da-tilt-half) * -1); }
-  .tilt-r-half { rotate: var(--da-tilt-half); }
-  .tilt-l1 { rotate: calc(var(--da-tilt-1) * -1); }
-  .tilt-r1 { rotate: var(--da-tilt-1); }
-  .tilt-l2 { rotate: calc(var(--da-tilt-2) * -1); }
-  .tilt-r2 { rotate: var(--da-tilt-2); }
-  .tilt-r3 { rotate: var(--da-tilt-3); }
+  /* Entrada das telas. */
+  .rise { animation: da-rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .fade-in { animation: da-fade 0.7s ease-out both; }
+  .delay-1 { animation-delay: 0.12s; }
+  .delay-2 { animation-delay: 0.24s; }
+  .delay-3 { animation-delay: 0.36s; }
 
-  @media (prefers-reduced-motion: reduce) {
-    .tilt-l-half, .tilt-r-half, .tilt-l1, .tilt-r1, .tilt-l2, .tilt-r2, .tilt-r3 { rotate: none; }
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* Fundo da capa do perfil e do clube escurecendo para o papel. */
+  .cover-fade::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(180deg, transparent 45%, var(--da-color-page) 100%);
   }
+}
+
+/* Carregando: a capa abre e fecha como um livro. */
+.book-loading {
+  transform-origin: left center;
+  animation: da-page-turn 1.6s ease-in-out infinite;
+}
+
+@keyframes da-page-turn {
+  0%, 100% { transform: perspective(400px) rotateY(0); }
+  50% { transform: perspective(400px) rotateY(-150deg); }
+}
+
+@keyframes da-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.82); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes da-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes da-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

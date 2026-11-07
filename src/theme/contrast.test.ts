@@ -1,4 +1,4 @@
-import { tokens } from './tokens'
+import { profileThemes, tokens } from './tokens'
 
 /** Luminância relativa (WCAG 2.x). */
 function luminance(hex: string) {
@@ -15,30 +15,27 @@ export function contrast(a: string, b: string) {
 
 const c = tokens.color
 
-/** Pares de texto × fundo usados na interface (`accent` e `line` são só decorativos). */
+/** Pares de texto × fundo usados na interface (`accent`, `gold` e `line` são só decorativos). */
 const TEXT_PAIRS: [string, string, string][] = [
-  ['texto verde sobre a página', c.primary, c.page],
-  ['texto verde sobre cartões', c.primary, c.card],
-  ['texto verde sobre as pílulas rosa', c.primary, c.pill],
-  ['texto verde sobre as listras', c.primary, c.stripeLight],
-  ['botão primário (creme sobre verde)', c.inverse, c.primary],
-  ['botão primário em foco (creme sobre verde escuro)', c.inverse, c.primaryHover],
-  ['rótulos rosa sobre verde', c.pill, c.primary],
-  ['abas inativas sobre a barra', c.navInactive, c.page],
-  ['rosa forte (avisos de IA) sobre a página', c.accentStrong, c.page],
-  ['rosa forte sobre cartões', c.accentStrong, c.card],
-  ['texto secundário sobre a página', c.muted, c.page],
+  ['texto sobre o papel', c.ink, c.page],
+  ['texto sobre cartões', c.ink, c.card],
+  ['vinho (títulos, links) sobre o papel', c.primary, c.page],
+  ['vinho sobre cartões', c.primary, c.card],
+  ['vinho sobre etiquetas', c.primary, c.tag],
+  ['vinho sobre o rosa claro', c.primary, c.blush],
+  ['botão (papel sobre vinho)', c.inverse, c.primary],
+  ['botão em foco (papel sobre vinho escuro)', c.inverse, c.primaryHover],
+  ['rosa claro sobre o vinho', c.blush, c.primary],
+  ['texto sobre a areia', c.ink, c.border],
+  ['texto secundário sobre o papel', c.muted, c.page],
   ['texto secundário sobre cartões', c.muted, c.card],
-  ['erros sobre a página', c.danger, c.page],
+  ['erros sobre o papel', c.danger, c.page],
   ['erros sobre cartões', c.danger, c.card],
-  ['botão de exclusão (creme sobre vermelho)', c.inverse, c.danger],
+  ['botão de exclusão (papel sobre vermelho)', c.inverse, c.danger],
 ]
 
-/** Texto grande (≥ 24px, títulos cursivos): WCAG AA pede ≥ 3:1. */
-const LARGE_TEXT_PAIRS: [string, string, string][] = [
-  ['títulos cursivos rosa sobre a página', c.title, c.page],
-  ['títulos cursivos rosa sobre cartões', c.title, c.card],
-]
+/** Texto grande (≥ 24px ou ≥ 19px em negrito): WCAG AA pede ≥ 3:1. */
+const LARGE_TEXT_PAIRS: [string, string, string][] = [['rosa queimado em destaques grandes', c.accent, c.page]]
 
 describe('contraste das cores (WCAG AA, texto normal ≥ 4,5:1)', () => {
   it('calcula como a WCAG (preto × branco = 21:1)', () => {
@@ -53,8 +50,19 @@ describe('contraste das cores (WCAG AA, texto normal ≥ 4,5:1)', () => {
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(3)
   })
 
-  it('estrelas vazias (contorno verde) têm contraste de elemento gráfico ≥ 3:1', () => {
-    expect(contrast(c.ratingEmpty, c.page)).toBeGreaterThanOrEqual(3)
-    expect(contrast(c.ratingEmpty, c.card)).toBeGreaterThanOrEqual(3)
+  it('estrelas cheias (vinho) têm contraste de elemento gráfico ≥ 3:1 e vêm com rótulo de texto', () => {
+    expect(contrast(c.ratingFilled, c.page)).toBeGreaterThanOrEqual(3)
+    expect(contrast(c.ratingFilled, c.card)).toBeGreaterThanOrEqual(3)
+  })
+})
+
+describe('temas do perfil (texto ≥ 4,5:1)', () => {
+  it.each(Object.entries(profileThemes))('%s', (_id, t) => {
+    expect(contrast(t.accent, t.paper)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(t.ink, t.paper)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(t.muted, t.paper)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(t.accent, t.card)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(t.ink, t.card)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(t.onAccent, t.accent)).toBeGreaterThanOrEqual(4.5)
   })
 })

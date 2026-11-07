@@ -27,7 +27,7 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Recuperar senha">
+    <AuthLayout title="esqueceu a senha?" subtitle="mandamos um link para você criar uma nova." back={{ to: '/entrar', label: 'entrar' }}>
       {sent ? (
         <FormMessage tone="success">
           Se existir uma conta com {email.trim()}, você vai receber um link para criar uma nova senha.

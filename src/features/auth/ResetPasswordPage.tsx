@@ -33,7 +33,7 @@ export function ResetPasswordPage() {
   if (loading) {
     return (
       <AuthLayout title="Nova senha">
-        <p className="font-hand text-lg text-primary">Abrindo o link…</p>
+        <p className="font-serif italic text-lg text-primary">Abrindo o link…</p>
       </AuthLayout>
     )
   }

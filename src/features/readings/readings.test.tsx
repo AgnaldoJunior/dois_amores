@@ -38,6 +38,17 @@ vi.mock('@/features/shelf/api', () => ({
   useBookEnrichment: () => ({ isFetching: false }),
   useIsInWishlist: () => ({ data: false }),
   useWishlistToggle: () => ({ mutate: vi.fn(), isPending: false }),
+  useBookReaders: () => ({ data: [] }),
+}))
+
+vi.mock('@/features/shelf/shelvesApi', () => ({
+  useCustomShelves: () => ({ data: [] }),
+  useToggleShelfBook: () => ({ mutate: vi.fn() }),
+}))
+
+vi.mock('@/features/clubs/api', () => ({
+  useMyClubBooks: () => ({ data: [] }),
+  useMyClubs: () => ({ data: [] }),
 }))
 
 vi.mock('@/features/profile/api', () => ({
@@ -54,6 +65,7 @@ const form = (over: Partial<ReadingForm> = {}): ReadingForm => ({
   favorite_character: '',
   favorite_quote: '',
   comment: '',
+  format: '',
   ...over,
 })
 
@@ -103,7 +115,7 @@ describe('Publicar leitura', () => {
 
   it('não salva sem livro', async () => {
     renderApp('/publicar')
-    await userEvent.click(screen.getByRole('button', { name: 'SALVAR' }))
+    await userEvent.click(screen.getByRole('button', { name: /^(salvar|publicar ficha ✎)$/ }))
     expect(screen.getByText('Escolha um livro na busca.')).toBeInTheDocument()
     expect(mocks.save).not.toHaveBeenCalled()
   })
@@ -120,7 +132,7 @@ describe('Publicar leitura', () => {
     await userEvent.click(screen.getByRole('group', { name: 'Personagens' }).querySelectorAll('input')[4]!)
     await userEvent.click(screen.getByRole('group', { name: 'Final' }).querySelectorAll('input')[3]!)
     await userEvent.type(screen.getByLabelText('Comentário'), 'Necessário.')
-    await userEvent.click(screen.getByRole('button', { name: 'SALVAR' }))
+    await userEvent.click(screen.getByRole('button', { name: /^(salvar|publicar ficha ✎)$/ }))
 
     await waitFor(() => expect(mocks.save).toHaveBeenCalled())
     expect(mocks.save.mock.calls[0]![0]).toEqual({
@@ -154,7 +166,7 @@ describe('Publicar leitura', () => {
     await userEvent.type(field, ' (editada)')
     expect(field).not.toHaveAccessibleDescription()
 
-    await userEvent.click(screen.getByRole('button', { name: 'SALVAR' }))
+    await userEvent.click(screen.getByRole('button', { name: /^(salvar|publicar ficha ✎)$/ }))
     await waitFor(() => expect(mocks.save).toHaveBeenCalled())
     expect(mocks.save.mock.calls[0]![0].values.favorite_quote).toBe('Uma frase marcante do livro. (editada)')
   })
@@ -166,7 +178,7 @@ describe('Publicar leitura', () => {
     await userEvent.clear(start)
     await userEvent.type(start, '2026-10-10')
     await userEvent.type(screen.getByLabelText('Fim da leitura'), '2026-10-01')
-    await userEvent.click(screen.getByRole('button', { name: 'SALVAR' }))
+    await userEvent.click(screen.getByRole('button', { name: /^(salvar|publicar ficha ✎)$/ }))
     expect(screen.getByLabelText('Fim da leitura')).toHaveAccessibleDescription('O fim precisa ser depois do início.')
     expect(mocks.save).not.toHaveBeenCalled()
   })

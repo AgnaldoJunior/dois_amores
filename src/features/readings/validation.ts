@@ -10,7 +10,15 @@ export type ReadingForm = {
   favorite_character: string
   favorite_quote: string
   comment: string
+  format: '' | ReadingFormat
 }
+
+export type ReadingFormat = 'impresso' | 'ebook' | 'audiobook'
+export const READING_FORMATS: { value: ReadingFormat; label: string }[] = [
+  { value: 'impresso', label: 'impresso' },
+  { value: 'ebook', label: 'e-book' },
+  { value: 'audiobook', label: 'audiobook' },
+]
 
 export type ReadingErrors = Partial<Record<'book' | 'started_on' | 'finished_on', string>>
 
@@ -41,6 +49,7 @@ export function toReadingValues(form: ReadingForm): ReadingValues {
     favorite_character: blankToNull(form.favorite_character),
     favorite_quote: blankToNull(form.favorite_quote),
     comment: blankToNull(form.comment),
+    format: form.format || null,
   }
 }
 
@@ -55,6 +64,7 @@ export function fromReadingValues(values: ReadingValues): ReadingForm {
     favorite_character: values.favorite_character ?? '',
     favorite_quote: values.favorite_quote ?? '',
     comment: values.comment ?? '',
+    format: (values.format as ReadingFormat | null) ?? '',
   }
 }
 

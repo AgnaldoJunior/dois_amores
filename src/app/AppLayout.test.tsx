@@ -1,16 +1,43 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from '@/test/renderApp'
 
-const updateProgress = vi.hoisted(() => vi.fn())
-
-vi.mock('@/features/profile/api', () => ({
-  useProfile: () => ({
-    data: { id: 'user-1', name: 'Leyna Souza', avatar_url: null, bio: null },
-    isLoading: false,
-  }),
+const m = vi.hoisted(() => ({
+  updateProgress: vi.fn(),
+  like: vi.fn(),
+  profile: { id: 'user-1', name: 'Leyna Souza', avatar_url: null, bio: null, onboarded_at: '2026-04-20T10:00:00Z', notifications_seen_at: '2026-11-01T00:00:00Z' } as Record<string, unknown>,
 }))
 
+const post = {
+  id: 'p1',
+  created_at: '2026-09-27T20:00:00Z',
+  author: { id: 'irla', name: 'Irla Lima', avatar_url: null },
+  reading: {
+    id: 'r1',
+    finished_on: '2026-09-27',
+    rank_characters: 5,
+    rank_plot: 4,
+    rank_writing: 5,
+    rank_ending: 4,
+    comment: 'Me acompanhou por dias.',
+    favorite_quote: 'Eles eram três. Ou nada.',
+    book: { id: 'b1', title: 'Três', author: 'Valérie Perrin', cover_url: null },
+  },
+  likes: [{ user_id: 'thais' }],
+  comments: [{ count: 2 }],
+}
+
+vi.mock('@/features/profile/api', () => ({
+  useProfile: () => ({ data: m.profile, isLoading: false }),
+}))
+vi.mock('@/features/feed/api', () => ({
+  useFeed: () => ({ data: { pages: [[post]] }, isLoading: false, isError: false, hasNextPage: false }),
+  useFriendsReadingNow: () => ({ data: [{ id: 'x', user: { id: 'wane', name: 'Wanessa' }, book: { id: 'b8', title: 'Recursão', cover_url: null } }] }),
+  useToggleLike: () => ({ mutate: m.like, isPending: false }),
+}))
+vi.mock('@/features/notifications/api', () => ({
+  useNotifications: () => ({ data: [{ kind: 'like', created_at: '2026-11-05T10:00:00Z', body: null, post_id: 'p1', actor: null, book: null }] }),
+}))
 vi.mock('@/features/shelf/api', () => ({
   useShelf: () => ({
     data: {
@@ -28,88 +55,74 @@ vi.mock('@/features/shelf/api', () => ({
     },
   }),
 }))
-
 vi.mock('@/features/readings/api', () => ({
-  useUpdateProgress: () => ({ mutateAsync: updateProgress, isPending: false }),
-  useMyStats: () => ({ data: { booksRead: 12, pagesRead: 3480, clubs: 2 } }),
-  useRecentReadings: () => ({
-    data: [
-      {
-        id: 'r1',
-        started_on: '2026-09-01',
-        finished_on: '2026-09-27',
-        rank_characters: 5,
-        rank_plot: 4,
-        rank_writing: 5,
-        rank_ending: 4,
-        favorite_character: null,
-        favorite_quote: null,
-        comment: 'Me acompanhou por dias.',
-        book: { id: 'b1', title: 'Três', author: 'Valérie Perrin', pages: 672, cover_url: null, summary: null },
-      },
-    ],
-    isLoading: false,
-  }),
+  useUpdateProgress: () => ({ mutateAsync: m.updateProgress, isPending: false }),
 }))
-
 vi.mock('@/features/clubs/api', () => ({
   useJoinClub: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useMyClubs: () => ({ data: [{ id: 'c1', name: 'Dois Amores', cover_url: null, memberCount: 4 }] }),
-  useMyClubBooks: () => ({
-    data: [
-      {
-        id: 'cb8',
-        club_id: 'c1',
-        status: 'reading',
-        edition_number: 8,
-        started_on: '2026-10-01',
-        proposed_by: 'irla',
-        book: { id: 'b8', title: '10 minutos e 38 segundos neste mundo estranho', author: 'Elif Shafak', cover_url: null },
-      },
-    ],
-  }),
+  useMyClubs: () => ({ data: [], isLoading: false }),
 }))
 
 describe('navegação principal', () => {
-  it('mostra as quatro abas', () => {
+  it('mostra as cinco abas', () => {
     renderApp('/')
     const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
-    const links = [...nav.querySelectorAll('a')].map((a) => a.textContent)
-    expect(links).toEqual(['Início', 'Feed', 'Meus livros', 'Clubes'])
+    expect([...nav.querySelectorAll('a')].map((a) => a.textContent)).toEqual(['início', 'estantes', 'clubes', 'números', 'perfil'])
   })
 
   it('marca a aba atual com aria-current', () => {
     renderApp('/clubes')
-    expect(screen.getByRole('link', { name: 'Clubes' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Início' })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: 'clubes' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'início' })).not.toHaveAttribute('aria-current')
   })
 
-  it('a tela inicial cumprimenta pelo primeiro nome e mostra as estatísticas', () => {
+  it('rota desconhecida mostra página não encontrada', () => {
+    renderApp('/nao-existe')
+    expect(screen.getByRole('heading', { name: 'Página não encontrada' })).toBeInTheDocument()
+  })
+
+  it('endereços antigos levam às telas novas', () => {
+    const { router } = renderApp('/meus-livros')
+    expect(router.state.location.pathname).toBe('/estantes')
+  })
+
+  it('conta nova vai para o cadastro do perfil antes do app', () => {
+    m.profile = { ...m.profile, onboarded_at: null }
+    const { router } = renderApp('/')
+    expect(router.state.location.pathname).toBe('/bem-vindo/1')
+    m.profile = { ...m.profile, onboarded_at: '2026-04-20T10:00:00Z' }
+  })
+})
+
+describe('início', () => {
+  it('cumprimenta, mostra a citação do dia e o que as amigas estão lendo', () => {
     renderApp('/')
-    expect(screen.getByRole('heading', { name: 'Olá, Leyna!' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Abrir meu perfil' })).toHaveAttribute('href', '/perfil')
-    expect(screen.getByText('Livros lidos')).toBeInTheDocument()
-    expect(screen.getByText('12')).toBeInTheDocument()
-    expect(screen.getByText('3.480')).toBeInTheDocument()
-    expect(screen.getByText('Páginas lidas')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'olá, leyna' })).toBeInTheDocument()
+    expect(screen.getByText('“Eles eram três. Ou nada.”')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Wanessa está lendo Recursão' })).toHaveAttribute('href', '/livros/b8')
+    expect(screen.getByRole('link', { name: 'Novidades (há novas)' })).toHaveAttribute('href', '/notificacoes')
+    expect(screen.getByRole('link', { name: 'Buscar livro' })).toHaveAttribute('href', '/buscar')
   })
 
-  it('a tela inicial lista as leituras recentes com link para a página do livro', () => {
+  it('fichas com curtir, comentar e o número de cada um', async () => {
     renderApp('/')
-    const link = screen.getByRole('link', { name: /^Três/ })
-    expect(link).toHaveAttribute('href', '/livros/b1')
-    expect(screen.getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
+    const item = within(screen.getByRole('list', { name: 'Leituras concluídas' })).getByRole('listitem')
+    expect(within(item).getByRole('heading', { name: 'Três' })).toBeInTheDocument()
+    expect(within(item).getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument()
+    expect(within(item).getByText('27 set')).toBeInTheDocument()
+    expect(within(item).getByRole('link', { name: /comentar · 2/ })).toHaveAttribute('href', '/fichas/p1')
+    await userEvent.click(within(item).getByRole('button', { name: /curtir · 1/ }))
+    expect(m.like).toHaveBeenCalledWith({ postId: 'p1', like: true })
   })
 
-  it('a tela inicial mostra o livro que o clube está lendo e o atalho para o ranking', () => {
+  it('filtra só as resenhas (fichas com comentário)', async () => {
     renderApp('/')
-    const ticket = screen.getByRole('link', { name: /no clube agora · No\.08/ })
-    expect(ticket).toHaveAttribute('href', '/clubes/c1/livros/cb8')
-    expect(ticket).toHaveTextContent('10 minutos e 38 segundos neste mundo estranho')
-    expect(screen.getByRole('link', { name: 'ver o ranking do clube' })).toHaveAttribute('href', '/clubes/c1/ranking')
+    await userEvent.click(screen.getByRole('button', { name: 'resenhas' }))
+    expect(screen.getByRole('button', { name: 'resenhas' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(screen.getByRole('list', { name: 'Leituras concluídas' })).getAllByRole('listitem')).toHaveLength(1)
   })
 
-  it('"lendo agora" mostra o progresso e atualiza a página atual', async () => {
+  it('"você está lendo" mostra o progresso e atualiza a página atual', async () => {
     renderApp('/')
     expect(screen.getByRole('progressbar', { name: 'Progresso de A hora da estrela' })).toHaveAttribute('aria-valuenow', '38')
     expect(screen.getByText('38% lido · pág. 152 de 400')).toBeInTheDocument()
@@ -122,12 +135,7 @@ describe('navegação principal', () => {
     await userEvent.clear(page)
     await userEvent.type(page, '200')
     await userEvent.click(screen.getByRole('button', { name: 'salvar' }))
-    expect(updateProgress).toHaveBeenCalledWith({ id: 'r9', page: 200 })
-  })
-
-  it('rota desconhecida mostra página não encontrada', () => {
-    renderApp('/nao-existe')
-    expect(screen.getByRole('heading', { name: 'Página não encontrada' })).toBeInTheDocument()
+    expect(m.updateProgress).toHaveBeenCalledWith({ id: 'r9', page: 200 })
   })
 })
 
@@ -136,7 +144,7 @@ describe('rotas protegidas', () => {
     const { router } = renderApp('/clubes', null)
     expect(router.state.location.pathname).toBe('/entrar')
     expect(router.state.location.state).toEqual({ from: '/clubes' })
-    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'entrar' })).toBeInTheDocument()
   })
 
   it('a política de privacidade é pública', () => {

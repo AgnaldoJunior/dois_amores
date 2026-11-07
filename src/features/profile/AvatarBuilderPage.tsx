@@ -35,7 +35,7 @@ type TabId = (typeof TABS)[number]['id']
 /** /perfil/avatar — "Crie seu avatar". */
 export function AvatarBuilderPage() {
   const { data: profile, isLoading } = useProfile()
-  if (isLoading || !profile) return <p className="font-hand text-lg text-primary">Abrindo o ateliê…</p>
+  if (isLoading || !profile) return <p className="font-serif italic text-lg text-primary">Abrindo o ateliê…</p>
   return <Builder profile={profile} />
 }
 
@@ -77,7 +77,7 @@ function Builder({ profile }: { profile: Profile }) {
         <button
           type="button"
           onClick={shuffle}
-          className="tilt-r3 inline-flex min-h-11 items-center gap-1.5 rounded-sm border border-primary bg-pill px-3 font-mono font-bold text-2xs uppercase tracking-label"
+          className=" inline-flex min-h-11 items-center gap-1.5 rounded-sm border border-primary bg-tag px-3 font-sans font-semibold text-2xs uppercase tracking-label"
         >
           <Icon name="dice" className="size-icon-sm" />
           sortear
@@ -85,11 +85,11 @@ function Builder({ profile }: { profile: Profile }) {
       </div>
       <PageTitle className="-mt-2">Crie seu avatar</PageTitle>
 
-      <div className="stripes flex h-preview items-center justify-center rounded-card border border-line">
-        <figure className="tilt-l2 relative m-0 flex flex-col items-center bg-accent px-2.5 pt-2.5 pb-1">
-          <span aria-hidden="true" className="tilt-l2 absolute -top-2.5 left-1/2 h-6 w-16 -translate-x-1/2 bg-card opacity-90" />
+      <div className="bg-tag flex h-preview items-center justify-center rounded-card border border-line">
+        <figure className=" relative m-0 flex flex-col items-center bg-accent px-2.5 pt-2.5 pb-1">
+          <span aria-hidden="true" className=" absolute -top-2.5 left-1/2 h-6 w-16 -translate-x-1/2 bg-card opacity-90" />
           <IllustratedAvatar config={config} className="size-avatar-xl max-w-full" label="Prévia do seu avatar" />
-          <figcaption className="font-script text-3xl leading-tight">{name || 'você'}</figcaption>
+          <figcaption className="font-display italic text-3xl leading-tight">{name || 'você'}</figcaption>
           {pet && (
             <span aria-hidden="true" className="absolute -right-4 -bottom-3 flex size-12 items-center justify-center rounded-full border border-primary bg-page text-2xl">
               {pet}
@@ -109,7 +109,7 @@ function Builder({ profile }: { profile: Profile }) {
             aria-controls="avatar-panel"
             onClick={() => setTab(t.id)}
             className={
-              'min-h-11 shrink-0 rounded-full border border-primary px-3.5 font-mono font-bold text-2xs uppercase tracking-label ' +
+              'min-h-11 shrink-0 rounded-full border border-primary px-3.5 font-sans font-semibold text-2xs uppercase tracking-label ' +
               (tab === t.id ? 'bg-primary text-inverse' : 'bg-page text-primary')
             }
           >
@@ -119,7 +119,7 @@ function Builder({ profile }: { profile: Profile }) {
       </div>
 
       <div id="avatar-panel" role="tabpanel" aria-labelledby={`avatar-tab-${tab}`} className="flex flex-col gap-2.5">
-        <p className="font-hand text-lg">{current.hint}</p>
+        <p className="font-serif italic text-lg">{current.hint}</p>
         {tab === 'skin' && (
           <Swatches
             label="Tom de pele"
@@ -217,7 +217,7 @@ function Tiles<T extends string>({ label, options, value, onChange }: { label: s
           >
             <input type="radio" name={label} checked={on} onChange={() => onChange(o.value)} className="sr-only" />
             {o.preview ? <IllustratedAvatar config={o.preview} className="size-avatar-md rounded-sm" /> : <span aria-hidden="true">{o.content}</span>}
-            <span className="font-mono font-bold text-2xs uppercase tracking-label">{o.label}</span>
+            <span className="font-sans font-semibold text-2xs uppercase tracking-label">{o.label}</span>
           </label>
         )
       })}

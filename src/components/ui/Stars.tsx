@@ -1,6 +1,6 @@
 import { useId } from 'react'
 
-/** Estrela do design (viewBox 24 × 24), sempre com contorno verde. */
+/** Estrela (viewBox 24 × 24): cheia em vinho, vazia só com o contorno. */
 const STAR_PATH = 'M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.5L12 17.3 6.1 20.5l1.3-6.5L2.5 9.4l6.6-.8z'
 const VIEW = 24
 
@@ -10,7 +10,6 @@ const sizeClass = {
   xs: 'size-star-xs',
   sm: 'size-star-sm',
   md: 'size-star-md',
-  post: 'size-star-post',
   lg: 'size-star-lg',
 } as const
 
@@ -31,7 +30,7 @@ export function formatRating(value: number) {
 export type StarTone = 'primary' | 'inverse'
 
 const toneClass = {
-  primary: { fill: 'fill-ratingFilled', stroke: 'stroke-ratingEmpty' },
+  primary: { fill: 'fill-ratingFilled', stroke: 'stroke-ratingFilled' },
   inverse: { fill: 'fill-inverse', stroke: 'stroke-inverse' },
 } as const
 
@@ -51,7 +50,7 @@ export function StarIcon({ fill, className, tone = 'primary' }: { fill: StarFill
       <path
         d={STAR_PATH}
         className={`${fill === 'full' ? t.fill : 'fill-transparent'} ${t.stroke}`}
-        strokeWidth={1.8}
+        strokeWidth={1.6}
         strokeLinejoin="round"
       />
     </svg>
@@ -69,7 +68,7 @@ type StarsProps = {
   tone?: StarTone
 }
 
-/** Exibição de nota (somente leitura): estrelas verdes cheias, vazias só com contorno, suporte a meia estrela. */
+/** Exibição de nota (somente leitura): estrelas cheias em vinho, vazias só com contorno, suporte a meia estrela. */
 export function Stars({ value, size = 'md', max = 5, label, className = '', tone = 'primary' }: StarsProps) {
   const fills = starFills(value, max)
   const accessibleLabel =

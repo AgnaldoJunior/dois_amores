@@ -13,13 +13,12 @@ describe('design tokens → CSS', () => {
     const vars = buildCssVariables()
     expect(vars['--da-color-primary']).toBe(tokens.color.primary)
     expect(vars['--da-color-accent']).toBe(tokens.color.accent)
-    expect(vars['--da-text-md']).toBe('1rem')
+    expect(vars['--da-text-md']).toBe('0.875rem')
     expect(vars['--da-space-0_5']).toBe('0.125rem')
     expect(vars['--da-size-avatar-md']).toBe('3.5rem')
-    expect(vars['--da-radius-card']).toBe('0.375rem')
-    expect(vars['--da-border']).toBe('1.5px')
-    expect(vars['--da-tilt-1']).toBe('1.5deg')
-    expect(vars['--da-font-display']).toContain('"Bebas Neue"')
+    expect(vars['--da-radius-card']).toBe('0.75rem')
+    expect(vars['--da-border']).toBe('1px')
+    expect(vars['--da-font-display']).toContain('"Playfair Display"')
     expect(Object.keys(vars).filter((k) => k.startsWith('--da-color-'))).toHaveLength(
       Object.keys(tokens.color).length,
     )

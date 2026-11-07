@@ -292,16 +292,14 @@ Toda cor, fonte, tamanho, espaçamento, raio e sombra da interface vem de
 fonte do tema do Tailwind (o tema padrão do Tailwind não é carregado). A revista tem os próprios
 valores em `templates/revista/<id>/tokens.json`.
 
-Para trocar a identidade visual: edite `tokens.ts`, substitua `public/logo.svg` e as fontes em
-`public/fonts/` (TTF, usadas pela interface e pelo PDF) e rode `npm run icons`.
+Identidade "the bookside": vinho `#6B0D24`, papel creme `#F9F5EE`, cartões `#FFF8F3`, tinta
+`#2B1420`, estrelinhas douradas; Playfair Display em itálico nos títulos, DM Serif Display nas
+citações e Inter no texto. Capas com lombada, tábua de estante e estrelinhas são classes em
+[src/index.css](src/index.css). Cada perfil escolhe um de 8 temas (`profileThemes`), aplicado por
+variáveis CSS no próprio perfil.
 
-Estilo "scrapbook": verde `#0B5130`, creme, papel kraft e rosa; Bebas Neue (números), Pinyon
-Script (títulos), Courier Prime em negrito (rótulos e botões), Special Elite (títulos de livros),
-Shadows Into Light Two (texto manuscrito) e Inter nos campos de formulário e sinopses. Selos,
-ingressos, listras e tábuas de estante são classes em [src/index.css](src/index.css) feitas só
-com as variáveis dos tokens. O avatar ilustrado é desenhado por
-[src/lib/avatar/shapes.ts](src/lib/avatar/shapes.ts): a mesma lista de formas vira SVG no app e
-PNG na revista.
+Abas: início · estantes · clubes · números · perfil. Contas novas passam pelo cadastro do perfil
+(`/bem-vindo`, 8 passos) e podem fazer o teste "qual é o seu lado leitora?" (`/teste`).
 
 ## Estrutura de pastas
 

@@ -8,7 +8,7 @@ import { FormMessage } from "@/components/ui/FormMessage";
 import { RatingInput } from "@/components/ui/RatingInput";
 import { TextAreaField, TextField } from "@/components/ui/TextField";
 import { BackLink } from "@/components/ui/BackLink";
-import { PageTitle, SectionTitle } from "@/components/ui/Typography";
+import { HandText, PageTitle, SectionTitle } from "@/components/ui/Typography";
 import { useCurrentUser } from "@/lib/auth/AuthProvider";
 import { todayIso } from "@/lib/dates";
 import type { BookSearchResult } from "@/lib/openlibrary/client";
@@ -25,6 +25,7 @@ import {
 import {
   fromReadingValues,
   RANK_FIELDS,
+  READING_FORMATS,
   toReadingValues,
   validateReading,
   type ReadingErrors,
@@ -41,6 +42,7 @@ const emptyForm = (): ReadingForm => ({
   favorite_character: "",
   favorite_quote: "",
   comment: "",
+  format: "",
 });
 
 /** /publicar (nova leitura) e /leituras/:id/editar */
@@ -176,25 +178,27 @@ function ReadingEditor({ readingId, initialBook, initialForm }: EditorProps) {
         <BackLink to={isEdit && book ? `/livros/${book.id}` : "/"}>
           voltar
         </BackLink>
-        <PageTitle>{isEdit ? "Editar leitura" : "Publicar leitura"}</PageTitle>
+        <PageTitle>{isEdit ? "editar leitura" : "publicar leitura"}</PageTitle>
+        <HandText>
+          {form.finished_on ? "como foi a leitura? sua ficha aparece no feed." : "sem data de fim, o livro fica em “lendo agora”."}
+        </HandText>
       </div>
 
       {book ? (
-        <Card className="flex items-center gap-3 p-3">
+        <Card className="flex items-center gap-3.5 p-3.5">
           <BookCover
             title={book.title}
             url={book.cover_url}
             size="feed"
-            stamp
             decorative
           />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <p className="font-type text-md leading-tight">{book.title}</p>
+            <p className="m-0 font-display italic font-semibold text-xl leading-tight">{book.title}</p>
             {book.author && (
-              <p className="font-hand text-md leading-none">{book.author}</p>
+              <p className="m-0 font-serif italic text-sm text-muted">{book.author}</p>
             )}
             {book.pages && (
-              <p className="font-mono font-bold text-2xs uppercase tracking-label">
+              <p className="m-0 font-sans text-2xs font-semibold uppercase tracking-label text-muted">
                 {book.pages} páginas
               </p>
             )}
@@ -202,9 +206,9 @@ function ReadingEditor({ readingId, initialBook, initialForm }: EditorProps) {
               <button
                 type="button"
                 onClick={() => setBook(null)}
-                className="self-start font-hand text-md text-primary underline underline-offset-4"
+                className="min-h-11 self-start font-sans text-sm font-semibold text-primary"
               >
-                Trocar livro
+                trocar livro
               </button>
             )}
           </div>
@@ -213,10 +217,10 @@ function ReadingEditor({ readingId, initialBook, initialForm }: EditorProps) {
         <div className="flex flex-col gap-1">
           <BookSearch onSelect={onSelectBook} disabled={bookLoading} />
           {bookLoading && (
-            <p className="font-hand text-lg text-primary">Salvando livro…</p>
+            <p className="m-0 font-serif italic text-md text-muted">salvando livro…</p>
           )}
           {errors.book && (
-            <p className="font-sans text-sm text-danger">{errors.book}</p>
+            <p className="m-0 font-sans text-sm text-danger">{errors.book}</p>
           )}
         </div>
       )}
@@ -243,8 +247,34 @@ function ReadingEditor({ readingId, initialBook, initialForm }: EditorProps) {
         />
       </div>
 
-      <Card className="flex flex-col gap-2.5 p-3.5">
-        <SectionTitle>Suas estrelas</SectionTitle>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 font-sans text-2xs font-semibold uppercase tracking-label text-primary">Formato</legend>
+        <div className="flex gap-1.5">
+          {READING_FORMATS.map((f) => (
+            <label
+              key={f.value}
+              className={
+                "flex h-chip-h cursor-pointer items-center rounded-full border px-3.5 font-sans text-sm font-semibold has-[:focus-visible]:outline has-[:focus-visible]:outline-primary " +
+                (form.format === f.value ? "border-primary bg-primary text-inverse" : "border-border bg-card text-ink")
+              }
+            >
+              <input
+                type="radio"
+                name="format"
+                value={f.value}
+                checked={form.format === f.value}
+                onChange={() => set("format", f.value)}
+                onClick={() => form.format === f.value && set("format", "")}
+                className="sr-only"
+              />
+              {f.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <Card className="flex flex-col gap-2.5 p-4">
+        <SectionTitle>suas estrelas</SectionTitle>
         {RANK_FIELDS.map(({ key, label }) => (
           <RatingInput
             key={key}
@@ -290,7 +320,7 @@ function ReadingEditor({ readingId, initialBook, initialForm }: EditorProps) {
       {formError && <FormMessage tone="error">{formError}</FormMessage>}
 
       <Button type="submit" loading={save.isPending}>
-        SALVAR
+        {form.finished_on ? "publicar ficha ✎" : "salvar"}
       </Button>
 
       {isEdit &&

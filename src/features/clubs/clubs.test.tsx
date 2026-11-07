@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from '@/test/renderApp'
-import type { ClubBook, ClubDetail, MemberProfile } from './api'
+import type { ClubBook, ClubDetail } from './api'
 
 const m = vi.hoisted(() => ({
   clubs: [] as unknown[],
@@ -17,6 +17,12 @@ const m = vi.hoisted(() => ({
   searchBooks: vi.fn(),
   suggestClubReads: vi.fn(),
   yearReadings: [] as unknown[],
+  events: [] as unknown[],
+  addEvent: vi.fn(),
+  deleteEvent: vi.fn(),
+  setDue: vi.fn(),
+  updateInfo: vi.fn(),
+  person: undefined as unknown,
   shelfReadings: [] as unknown[],
 }))
 
@@ -37,8 +43,24 @@ vi.mock('@/features/clubs/api', async (importOriginal) => ({
   useChangeClubCover: () => mutation(vi.fn()),
   useLeaveClub: () => mutation(m.leave),
   useClubYearReadings: () => ({ data: m.yearReadings, isLoading: false }),
+  useClubEvents: () => ({ data: m.events }),
+  useAddClubEvent: () => mutation(m.addEvent),
+  useDeleteClubEvent: () => mutation(m.deleteEvent),
+  useSetClubBookDue: () => mutation(m.setDue),
+  useUpdateClubInfo: () => mutation(m.updateInfo),
   useClubShelfReadings: () => ({ data: m.shelfReadings, isLoading: false }),
 }))
+vi.mock('@/features/people/api', () => ({
+  usePerson: () => ({ data: m.person, isLoading: false, isError: !m.person }),
+  useFollows: () => ({ data: { followers: [], following: [], followedByMe: false } }),
+  useFavorites: () => ({ data: [] }),
+  usePersonReadings: () => ({ data: [] }),
+  useToggleFollow: () => ({ mutate: vi.fn(), isPending: false }),
+}))
+vi.mock('@/features/shelf/shelvesApi', () => ({
+  useCustomShelves: () => ({ data: [] }),
+}))
+
 vi.mock('@/lib/openlibrary/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/openlibrary/client')>()),
   searchBooks: m.searchBooks,
@@ -68,6 +90,7 @@ const clubBook = (id: string, title: string, over: Partial<ClubBook> = {}): Club
   book: { id: `book-${id}`, title, author: 'Autora', cover_url: null, pages: 300 },
   votes: [],
   queued_at: null,
+  due_on: null,
   ...over,
 })
 
@@ -90,6 +113,7 @@ function seedClub(role: 'owner' | 'member' = 'owner'): ClubDetail {
     id: 'club-1',
     name: 'Dois Amores',
     cover_url: null,
+    description: 'a gente lê com calma',
     invite_code: 'DAMS26',
     created_by: ME,
     members: [member(ME, 'Leyna', role), member('irla', 'Irla'), member('novata', 'Novata', 'member', '2026-10-25T00:00:00Z')],
@@ -115,6 +139,7 @@ beforeEach(() => {
   m.club = seedClub()
   m.yearReadings = []
   m.shelfReadings = []
+  m.events = []
 })
 
 describe('lista de clubes', () => {
@@ -123,7 +148,7 @@ describe('lista de clubes', () => {
     const list = screen.getByRole('list', { name: 'Seus clubes' })
     expect(within(list).getByRole('link', { name: /Dois Amores/ })).toHaveAttribute('href', '/clubes/club-1')
     expect(within(list).getByText('4 membros')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'CRIAR CLUBE' })).toHaveAttribute('href', '/clubes/novo')
+    expect(screen.getByRole('link', { name: '+ criar clube' })).toHaveAttribute('href', '/clubes/novo')
   })
 
   it('entra com o código e abre o clube', async () => {
@@ -171,59 +196,103 @@ describe('criar clube', () => {
 })
 
 describe('página do clube', () => {
-  it('mostra o código, copia e lista os membros', async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined)
-    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+  it('início: nome, leitura da vez, membros e convidar', async () => {
     renderApp('/clubes/club-1')
     expect(screen.getByRole('heading', { level: 1, name: 'Dois Amores' })).toBeInTheDocument()
-    expect(screen.getByText('DAMS26')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'COPIAR CÓDIGO' }))
-    expect(writeText).toHaveBeenCalledWith('DAMS26')
-    expect(await screen.findByRole('button', { name: 'CÓDIGO COPIADO ✓' })).toBeInTheDocument()
-
-    const members = screen.getByRole('region', { name: 'Membros' })
+    expect(screen.getByText('a gente lê com calma')).toBeInTheDocument()
+    const reading = screen.getByRole('list', { name: 'Livros em leitura no clube' })
+    expect(within(reading).getByRole('link', { name: 'Amanhecer na colheita' })).toHaveAttribute('href', '/clubes/club-1/livros/amanhecer')
+    const members = screen.getByRole('list', { name: 'Membros' })
     expect(within(members).getByRole('link', { name: 'Irla' })).toHaveAttribute('href', '/clubes/club-1/membros/irla')
     expect(within(members).getByRole('link', { name: 'Leyna (criou o clube)' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'sugerir livro' })).toHaveAttribute('href', '/clubes/club-1/propor')
+    expect(screen.getByRole('link', { name: 'ranking' })).toHaveAttribute('href', '/clubes/club-1/ranking')
+    expect(screen.getByRole('link', { name: 'revista' })).toHaveAttribute('href', '/clubes/club-1/revista')
   })
 
-  it('prateleiras com a média do clube (média das médias)', () => {
-    renderApp('/clubes/club-1')
+  it('abas do clube', () => {
+    renderApp('/clubes/club-1/biblioteca')
+    const tabs = screen.getByRole('navigation', { name: 'Seções do clube' })
+    expect(within(tabs).getAllByRole('link').map((a) => a.textContent)).toEqual(['início', 'feed', 'biblioteca', 'leitura', 'agenda'])
+    expect(within(tabs).getByRole('link', { name: 'biblioteca' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('biblioteca: lidos com a média do clube (média das médias)', () => {
+    renderApp('/clubes/club-1/biblioteca')
     const finished = screen.getByRole('list', { name: 'Livros concluídos no clube' })
     expect(within(finished).getByRole('link', { name: 'Três' })).toBeInTheDocument()
     expect(within(finished).getByRole('img', { name: '4,5 de 5 estrelas' })).toBeInTheDocument() // (5 + 4) / 2
     expect(within(finished).getByText('No.05')).toBeInTheDocument()
-
-    const reading = screen.getByRole('list', { name: 'Livros em leitura no clube' })
-    expect(within(reading).getByRole('link', { name: 'Amanhecer na colheita' })).toBeInTheDocument()
   })
 
-  it('concluir a leitura pede confirmação', async () => {
-    renderApp('/clubes/club-1')
+  it('sugestão pendente: andamento da votação e votos', async () => {
+    renderApp('/clubes/club-1/biblioteca')
+    const pending = screen.getByRole('list', { name: 'Aguardando aprovação' })
+    expect(within(pending).getByText('Proposto por Irla')).toBeInTheDocument()
+    // Novata entrou depois da proposta: só Leyna e Irla votam.
+    expect(within(pending).getByText('1 de 2 membros aprovaram')).toBeInTheDocument()
+    expect(within(pending).getAllByRole('listitem', { name: undefined }).length).toBeGreaterThan(0)
+    await userEvent.click(within(pending).getByRole('button', { name: 'votar ♡' }))
+    expect(m.vote).toHaveBeenCalledWith({ clubBookId: 'torto', approved: true })
+  })
+
+  it('leitura da vez: define o prazo e conclui com confirmação', async () => {
+    renderApp('/clubes/club-1/leitura')
+    expect(screen.getByText('ainda sem prazo. combinem uma data para todo mundo terminar.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'definir o prazo' }))
+    await userEvent.type(screen.getByLabelText('Termina em'), '2026-11-20')
+    await userEvent.click(screen.getByRole('button', { name: 'salvar' }))
+    expect(m.setDue).toHaveBeenCalledWith({ clubBookId: 'amanhecer', dueOn: '2026-11-20' })
+
     await userEvent.click(screen.getByRole('button', { name: 'concluir leitura' }))
     expect(m.finish).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole('button', { name: 'confirmar' }))
     expect(m.finish).toHaveBeenCalledWith('amanhecer')
   })
 
-  it('proposta pendente: andamento da votação e votos', async () => {
-    renderApp('/clubes/club-1')
-    const pending = screen.getByRole('region', { name: 'Aguardando aprovação' })
-    expect(within(pending).getByText('Proposto por Irla')).toBeInTheDocument()
-    // Novata entrou depois da proposta: só Leyna e Irla votam.
-    expect(within(pending).getByText('1 de 2 membros aprovaram')).toBeInTheDocument()
-    await userEvent.click(within(pending).getByRole('button', { name: 'APROVAR' }))
-    expect(m.vote).toHaveBeenCalledWith({ clubBookId: 'torto', approved: true })
+  it('prazo definido mostra dia X de Y', () => {
+    const club = seedClub()
+    club.books[1] = { ...club.books[1]!, started_on: '2026-10-01', due_on: '2026-10-20' }
+    m.club = club
+    renderApp('/clubes/club-1/leitura')
+    expect(screen.getByText(/dia \d+ de 20/)).toBeInTheDocument()
   })
 
-  it('ações do clube', () => {
-    renderApp('/clubes/club-1')
-    expect(screen.getByRole('link', { name: 'PROPOR LIVRO' })).toHaveAttribute('href', '/clubes/club-1/propor')
-    expect(screen.getByRole('link', { name: 'SUGESTÃO DO CLUBE' })).toHaveAttribute('href', '/clubes/club-1/sugestoes')
-    expect(screen.getByRole('link', { name: 'EXPORTAR REVISTA' })).toHaveAttribute('href', '/clubes/club-1/revista')
+  it('agenda: marca um encontro', async () => {
+    m.events = [{ id: 'e1', title: 'conversa do clube', notes: 'a irla traz o bolo', happens_on: '2099-12-12', created_by: ME }]
+    renderApp('/clubes/club-1/agenda')
+    expect(within(screen.getByRole('list', { name: 'Próximos' })).getByText('conversa do clube')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('O quê'), 'encontro de dezembro')
+    await userEvent.type(screen.getByLabelText('Quando'), '2099-12-20')
+    await userEvent.click(screen.getByRole('button', { name: 'agendar' }))
+    expect(m.addEvent).toHaveBeenCalledWith({ title: 'encontro de dezembro', happens_on: '2099-12-20', notes: null })
+    await userEvent.click(screen.getByRole('button', { name: 'Apagar conversa do clube' }))
+    expect(m.deleteEvent).toHaveBeenCalledWith('e1')
   })
 
-  it('dona gerencia o clube; membro só pode sair', async () => {
-    const { unmount } = renderApp('/clubes/club-1')
+  it('convidar: copia o link de convite', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    renderApp('/clubes/club-1/convidar')
+    expect(screen.getByText('DAMS26')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'copiar link' }))
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/convite/DAMS26`)
+    expect(await screen.findByRole('button', { name: 'link copiado ✓' })).toBeInTheDocument()
+  })
+
+  it('feed do clube: as fichas dos membros', () => {
+    renderApp('/clubes/club-1/feed')
+    const feed = screen.getByRole('list', { name: 'Fichas do clube' })
+    expect(within(feed).getAllByRole('listitem')).toHaveLength(2)
+  })
+
+  it('ajustes: dona edita e exclui; membro só pode sair', async () => {
+    const { unmount } = renderApp('/clubes/club-1/ajustes')
+    const name = screen.getByLabelText('Nome')
+    await userEvent.clear(name)
+    await userEvent.type(name, 'Dois Amores ♡')
+    await userEvent.click(screen.getByRole('button', { name: 'salvar alterações' }))
+    expect(m.updateInfo).toHaveBeenCalledWith({ name: 'Dois Amores ♡', description: 'a gente lê com calma' })
     expect(screen.getByRole('button', { name: 'Gerar novo código' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Excluir clube' }))
     await userEvent.click(screen.getByRole('button', { name: 'Sim, excluir o clube' }))
@@ -231,7 +300,7 @@ describe('página do clube', () => {
     unmount()
 
     m.club = seedClub('member')
-    renderApp('/clubes/club-1')
+    renderApp('/clubes/club-1/ajustes')
     expect(screen.queryByRole('button', { name: 'Gerar novo código' })).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Sair do clube' }))
     await userEvent.click(screen.getByRole('button', { name: 'Sim, sair do clube' }))
@@ -239,23 +308,22 @@ describe('página do clube', () => {
   })
 })
 
+describe('convite por link', () => {
+  it('entra no clube com um toque', async () => {
+    m.join.mockResolvedValue('club-9')
+    const { router } = renderApp('/convite/dams26')
+    await userEvent.click(screen.getByRole('button', { name: 'entrar no clube' }))
+    expect(m.join).toHaveBeenCalledWith('dams26')
+    await waitFor(() => expect(router.state.location.pathname).toBe('/clubes/club-9'))
+  })
+})
+
 describe('perfil do membro', () => {
-  it('mostra nome, foto e dados literários', () => {
-    const profile: MemberProfile = {
-      profile: { id: 'irla', name: 'Irla', avatar_url: null, bio: 'Sublinha e anota nas margens.', pet: '🐭' },
-      readings: [
-        { ...ranks('irla', 'b1', 5), pages: 200, book: { id: 'b1', title: 'Três', cover_url: null } },
-        { ...ranks('irla', 'b2', 3), pages: 100, book: { id: 'b2', title: 'Verity', cover_url: null } },
-      ],
-    }
-    m.member = profile
+  it('mostra o perfil e a participação no clube', () => {
+    m.person = { id: 'irla', name: 'Irla', avatar_url: null, theme: 'classica', show_followers: true, favorite_genres: [], username: 'irla.le' }
     renderApp('/clubes/club-1/membros/irla')
     expect(screen.getByRole('heading', { level: 1, name: 'Irla' })).toBeInTheDocument()
-    const stats = screen.getByRole('region', { name: 'Dados literários' })
-    expect(within(stats).getByText('2')).toBeInTheDocument()
-    expect(within(stats).getByText('300')).toBeInTheDocument()
-    expect(within(stats).getByText('4,0')).toBeInTheDocument()
-    expect(within(screen.getByRole('list', { name: 'Livros de Irla' })).getAllByRole('link')).toHaveLength(2)
+    expect(screen.getByRole('region', { name: 'No clube' })).toHaveTextContent('abril de 2026 · membro')
   })
 })
 
@@ -368,13 +436,12 @@ describe('ranking do clube', () => {
 })
 
 describe('página do clube: extras', () => {
-  it('os mais amados e os votos de cada membro', () => {
+  it('o que a gente amou e os votos de cada membro', () => {
     renderApp('/clubes/club-1')
-    const loved = screen.getByRole('region', { name: 'Os mais amados' })
+    const loved = screen.getByRole('list', { name: 'Os mais amados' })
     expect(within(loved).getByRole('link', { name: /Três/ })).toHaveAttribute('href', '/clubes/club-1/livros/tres')
-    const votes = within(screen.getByRole('region', { name: 'Aguardando aprovação' })).getByRole('list', { name: 'Votos' })
+    const votes = within(screen.getByRole('list', { name: 'Aguardando aprovação' })).getByRole('list', { name: 'Votos' })
     expect(within(votes).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['LLeyna…ainda não votou', 'IIrla✓aprovou'])
-    expect(screen.getByRole('link', { name: 'RANKING' })).toHaveAttribute('href', '/clubes/club-1/ranking')
   })
 
   it('o livro em leitura leva às reviews do clube', () => {
@@ -409,11 +476,11 @@ describe('fila do clube', () => {
     )
     m.club = club
     renderApp('/clubes/club-1')
-    const next = screen.getByRole('region', { name: 'Próximas' })
+    const next = screen.getByRole('list', { name: 'Próximas' })
     // Edição 5 concluída → em leitura é a No.06 e a fila começa na No.07.
     expect(next).toHaveTextContent('No.07')
-    expect(next).toHaveTextContent('escolha de 🐭 Irla')
+    expect(next).toHaveTextContent('escolha de 🐭 irla')
     expect(screen.getByRole('list', { name: 'Livros em leitura no clube' })).toHaveTextContent('No.06')
-    expect(within(screen.getByRole('region', { name: 'Membros' })).getByText('Irla 🐭')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Membros' })).getByText('irla 🐭')).toBeInTheDocument()
   })
 })

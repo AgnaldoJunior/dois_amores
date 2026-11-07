@@ -30,14 +30,14 @@ export function QuoteSuggestions({ bookId, onUse }: Props) {
       >
         SUGERIR COM IA
       </Button>
-      {!bookId && <p className="font-hand text-lg text-primary">escolha o livro para receber sugestões</p>}
+      {!bookId && <p className="font-serif italic text-lg text-primary">escolha o livro para receber sugestões</p>}
       {error && <FormMessage tone="error">{error}</FormMessage>}
 
       {suggest.data && (
         <section aria-label="Citações sugeridas pela IA" className="flex flex-col gap-2">
-          <p className="font-hand text-lg text-accentStrong">{AI_DISCLAIMER}</p>
+          <p className="font-serif italic text-lg text-primary">{AI_DISCLAIMER}</p>
           {suggest.data.length === 0 ? (
-            <p className="font-hand text-md text-primary">
+            <p className="font-serif italic text-md text-primary">
               A IA não encontrou citações com segurança para este livro. Que tal escrever a sua?
             </p>
           ) : (
@@ -45,8 +45,8 @@ export function QuoteSuggestions({ bookId, onUse }: Props) {
               {suggest.data.map((quote) => (
                 <li key={quote.text}>
                   <Card className="flex flex-col gap-2 p-3">
-                    <blockquote className="font-hand text-lg leading-tight text-primary">“{quote.text}”</blockquote>
-                    {quote.context && <p className="font-mono text-2xs uppercase text-primary">{quote.context}</p>}
+                    <blockquote className="font-serif italic text-lg leading-tight text-primary">“{quote.text}”</blockquote>
+                    {quote.context && <p className="font-sans text-2xs uppercase text-primary">{quote.context}</p>}
                     <Button variant="outline" fullWidth={false} className="self-start" onClick={() => onUse(quote.text)}>
                       Usar esta citação
                     </Button>

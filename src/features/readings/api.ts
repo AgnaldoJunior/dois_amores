@@ -21,6 +21,7 @@ export type ReadingValues = Pick<
   | 'favorite_character'
   | 'favorite_quote'
   | 'comment'
+  | 'format'
 >
 
 export type Reading = ReadingValues & {
@@ -32,7 +33,7 @@ export type Reading = ReadingValues & {
 
 const BOOK_FIELDS = 'id, title, author, pages, cover_url, summary'
 const READING_FIELDS = `id, started_on, finished_on, rank_characters, rank_plot, rank_writing, rank_ending,
-  favorite_character, favorite_quote, comment, current_page, book:books(${BOOK_FIELDS})`
+  favorite_character, favorite_quote, comment, format, current_page, book:books(${BOOK_FIELDS})`
 
 export const readingKeys = {
   all: ['readings'] as const,
