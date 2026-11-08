@@ -13,7 +13,8 @@ import { formatDayMonthShort } from '@/lib/dates'
 import { MONTH_NAMES } from '@/lib/domain/year'
 import { useShelf } from './api'
 import { filterShelf, fromReadings, groupByMonth, type ShelfFilter, type ShelfItem } from './shelves'
-import { useCustomShelves, useDeleteShelf } from './shelvesApi'
+import { AddBookToShelf } from './AddBookToShelf'
+import { useCustomShelves, useDeleteShelf, useToggleShelfBook } from './shelvesApi'
 
 const VIEW_KEY = 'da-shelf-view'
 type View = 'lista' | 'grade'
@@ -51,6 +52,7 @@ export function ShelfDetailPage() {
   const { data: personReadings } = usePersonReadings(owner)
   const { data: custom } = useCustomShelves(owner)
   const remove = useDeleteShelf()
+  const toggle = useToggleShelfBook()
 
   const readings = isMe ? [...(myShelf?.read ?? []), ...(myShelf?.reading ?? [])] : (personReadings ?? [])
   const customShelf = custom?.find((s) => s.id === shelf)
@@ -140,6 +142,9 @@ export function ShelfDetailPage() {
         </div>
       </div>
 
+      {isMe && customShelf && <AddBookToShelf target={{ kind: 'shelf', shelfId: customShelf.id }} />}
+      {isMe && shelf === 'quero-ler' && <AddBookToShelf target={{ kind: 'wishlist' }} />}
+
       {shown.length === 0 ? (
         <EmptyState title="nada nesta estante" icon="shelves">
           {filter === 'todos' ? 'Os livros que entrarem aqui aparecem nesta lista.' : 'Nenhum livro com esse filtro.'}
@@ -155,6 +160,15 @@ export function ShelfDetailPage() {
                   {item.date && formatDayMonthShort(item.date)}
                 </span>
               </Link>
+              {isMe && customShelf && (
+                <button
+                  type="button"
+                  onClick={() => toggle.mutate({ shelfId: customShelf.id, bookId: item.book.id, add: false })}
+                  className="min-h-9 font-sans text-xs font-semibold text-muted"
+                >
+                  tirar da estante
+                </button>
+              )}
             </li>
           ))}
         </ul>
@@ -177,6 +191,15 @@ export function ShelfDetailPage() {
                         {item.book.author && <span className="font-serif italic text-sm text-muted">{item.book.author}</span>}
                       </span>
                     </Link>
+                    {isMe && customShelf && (
+                      <button
+                        type="button"
+                        onClick={() => toggle.mutate({ shelfId: customShelf.id, bookId: item.book.id, add: false })}
+                        className="-mt-1 mb-2 ml-16 min-h-9 font-sans text-xs font-semibold text-muted"
+                      >
+                        tirar da estante
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -22,6 +22,7 @@ import {
   useWishlistToggle,
   type BookDetail,
 } from './api'
+import { shelfErrorMessage } from './AddBookToShelf'
 import { useCustomShelves, useToggleShelfBook } from './shelvesApi'
 
 const statusClass = (on: boolean) =>
@@ -124,6 +125,7 @@ function AddToShelf({ bookId }: { bookId: string }) {
   const { data: shelves } = useCustomShelves()
   const toggle = useToggleShelfBook()
   const [open, setOpen] = useState(false)
+  const [error, setError] = useState('')
   if (!shelves || shelves.length === 0) {
     return (
       <Link to="/estantes/nova" className="self-center font-sans text-sm font-semibold text-primary no-underline">
@@ -144,12 +146,22 @@ function AddToShelf({ bookId }: { bookId: string }) {
             return (
               <label key={s.id} className="flex min-h-11 cursor-pointer items-center justify-between gap-3 border-b border-line last:border-b-0">
                 <span className="font-display italic font-semibold text-lg">{s.name}</span>
-                <input type="checkbox" checked={has} onChange={() => toggle.mutate({ shelfId: s.id, bookId, add: !has })} className="size-5 accent-primary" />
+                <input
+                  type="checkbox"
+                  checked={has}
+                  disabled={toggle.isPending}
+                  onChange={() => {
+                    setError('')
+                    toggle.mutate({ shelfId: s.id, bookId, add: !has }, { onError: (err) => setError(shelfErrorMessage(err)) })
+                  }}
+                  className="size-5 accent-primary"
+                />
               </label>
             )
           })}
         </fieldset>
       )}
+      {error && <FormMessage tone="error">{error}</FormMessage>}
     </div>
   )
 }

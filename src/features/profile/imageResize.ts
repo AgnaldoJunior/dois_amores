@@ -40,15 +40,19 @@ export function resizeAvatar(file: Blob, size = AVATAR_SIZE, quality = 0.85): Pr
   return resizeImage(file, { width: size, height: size }, quality)
 }
 
-/** Recorta na proporção de `target`, redimensiona e reexporta como JPEG (sem metadados). */
+/**
+ * Recorta na proporção de `target` (no centro, ou no recorte escolhido pela pessoa),
+ * redimensiona e reexporta como JPEG (sem metadados).
+ */
 export async function resizeImage(
   file: Blob,
   target: { width: number; height: number },
   quality = 0.85,
+  crop?: { sx: number; sy: number; sw: number; sh: number },
 ): Promise<Blob> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   try {
-    const { sx, sy, sw, sh } = aspectCrop(bitmap.width, bitmap.height, target.width / target.height)
+    const { sx, sy, sw, sh } = crop ?? aspectCrop(bitmap.width, bitmap.height, target.width / target.height)
     const canvas = document.createElement('canvas')
     canvas.width = target.width
     canvas.height = target.height

@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, Ref } from 'react'
 import { Link, type LinkProps } from 'react-router'
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'quiet' | 'danger'
@@ -30,6 +30,7 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: Size
   fullWidth?: boolean
   loading?: boolean
+  ref?: Ref<HTMLButtonElement>
 }
 
 export function Button({

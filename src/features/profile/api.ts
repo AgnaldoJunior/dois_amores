@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCurrentUser } from '@/lib/auth/AuthProvider'
 import { supabase, type Tables } from '@/lib/supabase'
+import type { Crop } from './coverCrop'
 import { PROFILE_COVER_SIZE, resizeAvatar, resizeImage } from './imageResize'
 
 export type Profile = Pick<
@@ -106,8 +107,8 @@ export function useUploadCover() {
   const user = useCurrentUser()
   const update = useUpdateProfile()
   return useMutation({
-    mutationFn: async (file: File) => {
-      const blob = await resizeImage(file, PROFILE_COVER_SIZE)
+    mutationFn: async ({ file, crop }: { file: Blob; crop?: Crop }) => {
+      const blob = await resizeImage(file, PROFILE_COVER_SIZE, 0.85, crop)
       const path = coverPath(user.id)
       const { error } = await supabase.storage
         .from('avatars')

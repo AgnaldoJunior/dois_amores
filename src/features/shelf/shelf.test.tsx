@@ -15,6 +15,9 @@ const state = vi.hoisted(() => ({
   custom: [] as unknown[],
   toggleShelf: vi.fn(),
   createShelf: vi.fn(),
+  toggleShelfAsync: vi.fn(),
+  ensureBook: vi.fn(),
+  searchBooks: vi.fn(),
 }))
 
 vi.mock('@/features/shelf/api', async (importOriginal) => ({
@@ -33,7 +36,7 @@ vi.mock('@/features/shelf/api', async (importOriginal) => ({
 vi.mock('@/features/shelf/shelvesApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./shelvesApi')>()),
   useCustomShelves: () => ({ data: state.custom }),
-  useToggleShelfBook: () => ({ mutate: state.toggleShelf }),
+  useToggleShelfBook: () => ({ mutate: state.toggleShelf, mutateAsync: state.toggleShelfAsync, isPending: false }),
   useDeleteShelf: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useCreateShelf: () => ({ mutateAsync: state.createShelf, isPending: false }),
 }))
@@ -47,6 +50,11 @@ vi.mock('@/features/clubs/api', () => ({
 }))
 vi.mock('@/features/readings/api', () => ({
   useUpdateProgress: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  ensureBook: state.ensureBook,
+}))
+vi.mock('@/lib/openlibrary/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/openlibrary/client')>()),
+  searchBooks: state.searchBooks,
 }))
 
 const reading = (id: string, title: string, over: Partial<Reading> = {}): Reading => ({
@@ -135,6 +143,35 @@ describe('Estantes', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'lista de praia' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Daisy Jones/ })).toHaveAttribute('href', '/livros/book-7')
     expect(screen.getByRole('button', { name: 'apagar estante' })).toBeInTheDocument()
+  })
+
+  async function addFromSearch() {
+    state.searchBooks.mockResolvedValue([{ workKey: '/works/OL9W', title: 'Torto arado', author: 'Itamar', coverId: null, pages: 280, year: 2019 }])
+    state.ensureBook.mockResolvedValue({ id: 'torto', title: 'Torto arado', cover_url: null })
+    renderApp('/estantes/s1')
+    await userEvent.click(screen.getByRole('button', { name: '+ adicionar livro' }))
+    await userEvent.type(screen.getByRole('combobox', { name: 'Buscar livro para a estante' }), 'torto')
+    await userEvent.click(await screen.findByRole('option', { name: /Torto arado/ }))
+  }
+
+  it('adiciona um livro direto na estante própria', async () => {
+    state.toggleShelfAsync.mockReset().mockResolvedValue(undefined)
+    await addFromSearch()
+    expect(state.toggleShelfAsync).toHaveBeenCalledWith({ shelfId: 's1', bookId: 'torto', add: true })
+    expect(await screen.findByText('Torto arado entrou na estante ✦')).toBeInTheDocument()
+  })
+
+  it('livro repetido na estante é explicado', async () => {
+    state.toggleShelfAsync.mockReset().mockRejectedValue({ code: '23505' })
+    await addFromSearch()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Esse livro já está nesta estante.')
+  })
+
+  it('tira um livro da estante', async () => {
+    state.toggleShelf.mockReset()
+    renderApp('/estantes/s1')
+    await userEvent.click(screen.getByRole('button', { name: 'tirar da estante' }))
+    expect(state.toggleShelf).toHaveBeenCalledWith({ shelfId: 's1', bookId: 'book-7', add: false })
   })
 
   it('cria uma estante', async () => {
@@ -245,6 +282,6 @@ describe('Página do livro', () => {
     renderApp('/livros/book-1')
     await userEvent.click(screen.getByRole('button', { name: '+ estante' }))
     await userEvent.click(screen.getByRole('checkbox', { name: 'lista de praia' }))
-    expect(state.toggleShelf).toHaveBeenCalledWith({ shelfId: 's1', bookId: 'book-1', add: true })
+    expect(state.toggleShelf).toHaveBeenCalledWith({ shelfId: 's1', bookId: 'book-1', add: true }, expect.anything())
   })
 })

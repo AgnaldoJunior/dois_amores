@@ -7,6 +7,8 @@ const m = vi.hoisted(() => ({
   saveFavorites: vi.fn(),
   follow: vi.fn(),
   profile: {} as Record<string, unknown>,
+  ensureBook: vi.fn(),
+  searchBooks: vi.fn(),
 }))
 
 const year = new Date().getFullYear()
@@ -71,6 +73,14 @@ vi.mock('@/features/shelf/api', () => ({
 }))
 vi.mock('@/features/shelf/shelvesApi', () => ({
   useCustomShelves: () => ({ data: [{ id: 's1', user_id: 'user-1', name: 'lista de praia', color: 'rosa', created_at: '', books: [] }] }),
+}))
+vi.mock('@/features/readings/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/readings/api')>()),
+  ensureBook: m.ensureBook,
+}))
+vi.mock('@/lib/openlibrary/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/openlibrary/client')>()),
+  searchBooks: m.searchBooks,
 }))
 vi.mock('@/features/clubs/api', () => ({
   useMyClubs: () => ({ data: [] }),
@@ -148,6 +158,24 @@ describe('editar perfil', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: 'Duna' }))
     await userEvent.click(screen.getByRole('button', { name: 'salvar favoritos' }))
     expect(m.saveFavorites).toHaveBeenCalledWith(['tres', 'duna'])
+  })
+})
+
+describe('favoritos sem precisar ter lido', () => {
+  it('oferece leituras em andamento e estantes', () => {
+    renderApp('/perfil/favoritos')
+    expect(screen.getByRole('checkbox', { name: 'A hora da estrela' })).not.toBeChecked()
+  })
+
+  it('qualquer livro da busca entra nos favoritos', async () => {
+    m.searchBooks.mockResolvedValue([{ workKey: '/works/OL9W', title: 'Torto arado', author: 'Itamar', coverId: null, pages: 280, year: 2019 }])
+    m.ensureBook.mockResolvedValue({ id: 'torto', title: 'Torto arado', cover_url: null })
+    renderApp('/perfil/favoritos')
+    await userEvent.type(screen.getByRole('combobox', { name: 'Buscar qualquer livro' }), 'torto')
+    await userEvent.click(await screen.findByRole('option', { name: /Torto arado/ }))
+    expect(await screen.findByRole('checkbox', { name: 'Torto arado' })).toBeChecked()
+    await userEvent.click(screen.getByRole('button', { name: 'salvar favoritos' }))
+    expect(m.saveFavorites).toHaveBeenCalledWith(['tres', 'torto'])
   })
 })
 

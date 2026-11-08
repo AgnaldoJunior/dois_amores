@@ -11,6 +11,8 @@ import { useInvalidatePerson } from '@/features/people/api'
 import { profileThemes, type ProfileThemeId } from '@/theme/tokens'
 import { useProfile, useUpdateProfile, useUploadAvatar, useUploadCover, type Profile } from './api'
 import { AVATAR_ACCEPT, validateAvatarFile } from './imageResize'
+import { CoverCropDialog } from './CoverCropDialog'
+import type { Crop } from './coverCrop'
 import { PetPicker } from './PetPicker'
 
 export const USERNAME_PATTERN = /^[a-z0-9._]{3,30}$/
@@ -47,6 +49,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
   const [bio, setBio] = useState(profile.bio ?? '')
   const [pet, setPet] = useState<string | null>(profile.pet)
   const [message, setMessage] = useState<{ tone: 'error' | 'success'; text: string } | null>(null)
+  const [pendingCover, setPendingCover] = useState<File | null>(null)
 
   async function onSave(e: FormEvent) {
     e.preventDefault()
@@ -85,17 +88,35 @@ function ProfileForm({ profile }: { profile: Profile }) {
     if (!file) return
     const invalid = validateAvatarFile(file)
     if (invalid) return setMessage({ tone: 'error', text: invalid })
+    // A capa passa antes pelo ajuste de enquadramento.
+    if (kind === 'cover') return setPendingCover(file)
     try {
-      await (kind === 'avatar' ? upload : uploadCover).mutateAsync(file)
+      await upload.mutateAsync(file)
       invalidatePerson()
-      setMessage({ tone: 'success', text: kind === 'avatar' ? 'Foto atualizada.' : 'Capa atualizada.' })
+      setMessage({ tone: 'success', text: 'Foto atualizada.' })
     } catch {
+      setMessage({ tone: 'error', text: 'Não foi possível enviar a imagem. Tente outra.' })
+    }
+  }
+
+  async function onCoverCrop(crop: Crop) {
+    if (!pendingCover) return
+    try {
+      await uploadCover.mutateAsync({ file: pendingCover, crop })
+      invalidatePerson()
+      setPendingCover(null)
+      setMessage({ tone: 'success', text: 'Capa atualizada.' })
+    } catch {
+      setPendingCover(null)
       setMessage({ tone: 'error', text: 'Não foi possível enviar a imagem. Tente outra.' })
     }
   }
 
   return (
     <form onSubmit={onSave} className="flex flex-col gap-5" noValidate>
+      {pendingCover && (
+        <CoverCropDialog file={pendingCover} busy={uploadCover.isPending} onCancel={() => setPendingCover(null)} onConfirm={onCoverCrop} />
+      )}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center">
         <BackLink to="/perfil">perfil</BackLink>
         <span className="font-display italic font-semibold text-xl text-ink">editar perfil</span>

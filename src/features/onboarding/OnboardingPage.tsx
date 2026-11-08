@@ -9,6 +9,8 @@ import { Eyebrow } from '@/components/ui/Typography'
 import { useMyClubs } from '@/features/clubs/api'
 import { useInvalidatePerson } from '@/features/people/api'
 import { useProfile, useUpdateProfile, useUploadAvatar, useUploadCover, type Profile, type ProfileChanges } from '@/features/profile/api'
+import { CoverCropDialog } from '@/features/profile/CoverCropDialog'
+import type { Crop } from '@/features/profile/coverCrop'
 import { AVATAR_ACCEPT, validateAvatarFile } from '@/features/profile/imageResize'
 import { suggestUsername, USERNAME_PATTERN } from '@/features/profile/ProfilePage'
 import { useShelf } from '@/features/shelf/api'
@@ -115,6 +117,7 @@ function ProfileStep({ step, profile }: { step: number; profile: Profile }) {
   const [goal, setGoal] = useState<number | null>(profile.reading_goal)
   const [theme, setTheme] = useState<ProfileThemeId>((profile.theme as ProfileThemeId) ?? 'classica')
   const [genres, setGenres] = useState<string[]>(profile.favorite_genres ?? [])
+  const [pendingCover, setPendingCover] = useState<File | null>(null)
   const [error, setError] = useState('')
 
   const next = step < STEPS ? path(step + 1) : path('clube')
@@ -138,12 +141,24 @@ function ProfileStep({ step, profile }: { step: number; profile: Profile }) {
     const invalid = validateAvatarFile(file)
     if (invalid) return setError(invalid)
     setError('')
+    if (kind === 'cover') return setPendingCover(file)
     try {
-      await (kind === 'avatar' ? uploadAvatar : uploadCover).mutateAsync(file)
+      await uploadAvatar.mutateAsync(file)
       invalidate()
     } catch {
       setError('Não foi possível enviar a imagem. Tente outra.')
     }
+  }
+
+  async function onCoverCrop(crop: Crop) {
+    if (!pendingCover) return
+    try {
+      await uploadCover.mutateAsync({ file: pendingCover, crop })
+      invalidate()
+    } catch {
+      setError('Não foi possível enviar a imagem. Tente outra.')
+    }
+    setPendingCover(null)
   }
 
   const footer = (onContinue: () => void, label = 'continuar', skip = true) => (
@@ -209,6 +224,9 @@ function ProfileStep({ step, profile }: { step: number; profile: Profile }) {
 
       {step === 3 && (
         <>
+          {pendingCover && (
+            <CoverCropDialog file={pendingCover} busy={uploadCover.isPending} onCancel={() => setPendingCover(null)} onConfirm={onCoverCrop} />
+          )}
           <Heading eyebrow="o cenário da ficha" title="a capa do seu perfil" text="uma imagem da sua galeria aparece no topo do seu perfil." />
           <div className="relative h-36 overflow-hidden rounded-card bg-blush">
             {profile.cover_url && <img src={profile.cover_url} alt="" className="size-full object-cover" />}
